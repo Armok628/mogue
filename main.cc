@@ -32,7 +32,7 @@ int main()
 	px=10;py=10;
 	do
 	{
-		cls();cls();
+		cls();
 		draw();
 		int ione=in();
 		if (ione=='q')
