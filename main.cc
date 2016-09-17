@@ -1,6 +1,8 @@
 #include <iostream>
+#include <stdio.h>
 #include <ctime>
 #include <cstdlib>
+#include <ncurses.h>
 #include "main.h"
 #include "tile.h"
 using namespace std;
@@ -15,6 +17,7 @@ void draw();
 char in();
 int main()
 {
+	initscr();
 	srand(time(0));
 	for (int y=0;y<32;y++)
 		for (int x=0;x<64;x++)
@@ -32,33 +35,24 @@ int main()
 	px=10;py=10;
 	do
 	{
-		cls();
+		clear();refresh();
 		draw();
-		int ione=in();
+		ione=getch();
 		if (ione=='q')
 			quit=true;
 		else field[px][py].move(ione);
 	}
 	while (quit==false);
+	endwin();
 	return 0;
-}
-void cls()
-{
-	system("clear");
-	//for (int i=0;i<64;i++)
-	//	cout<<endl;
 }
 void draw()
 {
+	cout<<endl;
 	for (int y=0;y<32;y++)
 	{
 		for (int x=0;x<64;x++)
 			cout<<field[x][y].retc()<<field[x][y].ret();
-		cout<<_RESET_COLOR<<endl;
+		cout<<_RESET_COLOR<<endl<<'\r';
 	}
-}
-char in()
-{
-	cin>>input;
-	return input[0];
 }
