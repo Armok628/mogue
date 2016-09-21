@@ -30,6 +30,8 @@ int main()
 	field[15][17].floor();
 	/**/
 	field[10][10].set('@');field[10][10].setc(_WHITE);
+	field[10][10].m=false;
+	field[32][16].animal();
 	px=10;py=10;
 	do
 	{
@@ -38,7 +40,10 @@ int main()
 		ione=getch();
 		if (ione=='q')
 			quit=true;
-		else field[px][py].move(ione);
+		else field[px][py].pmove(ione);
+		for (int y=0;y<32;y++)
+			for (int x=0;x<64;x++)
+				field[x][y].rmove(x,y);
 	}
 	while (quit==false);
 	endwin();
