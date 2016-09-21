@@ -12,9 +12,7 @@ static char _WHITE[]="\033[1;39m";
 static bool quit = false;
 static char input[64];
 static char ione;
-void cls();
 void draw();
-char in();
 int main()
 {
 	initscr();
