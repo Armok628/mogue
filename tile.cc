@@ -7,10 +7,12 @@ static char _L_GREEN[]="\033[1;32m";
 static char _GRAY[]="\033[0;39m";
 static char _WHITE[]="\033[1;39m";
 static char _YELLOW[]="\033[1;33m";
+static char _RED[]="\033[0;31m";
+static char _L_RED[]="\033[1;31m";
 bool m;
 Tile::Tile()
 {
-	floor();
+	grass();
 }
 Tile::Tile(char b,char f,bool g)
 {
@@ -48,19 +50,24 @@ void Tile::rmove(int x,int y)
 			case 4:move(x,y,'l');break;
 		}
 }
-void Tile::wall()
+void Tile::wall(int x,int y)
 {
 	m=false;
-	bg=fg='X';
-	bc=fc=_GRAY;
+	bg=fg='%';
+	if (x%2!=y%2)
+		bc=fc=_RED;
+	else bc=fc=_L_RED;
+
 }
-void Tile::floor()
+void Tile::floor(int x,int y)
 {
 	m=false;
 	bg='#';
 	fg=' ';
-	bc=_WHITE;
 	fc=_RESET_COLOR;
+	if (x%2!=y%2)
+		bc=fc=_GRAY;
+	else bc=fc=_WHITE;
 }
 void Tile::animal()
 {
@@ -79,6 +86,7 @@ int Tile::setc(char* c)
 	if (fg==' ')
 		bc=c;
 	else fc=c;
+	return 0;////
 }
 char Tile::ret()
 {

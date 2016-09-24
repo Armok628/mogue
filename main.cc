@@ -21,6 +21,7 @@ int main()
 	d.statichouse();
 	d.placeplayer(10,10);
 	field[32][16].animal();
+	field[33][16].animal();
 	px=10;py=10;
 	do
 	{
