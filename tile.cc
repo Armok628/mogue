@@ -38,17 +38,18 @@ void Tile::grass()
 		case 4:bg='`';break;
 	}
 }
-void Tile::rmove(int x,int y)
+void Tile::rmove(int x,int y,int c)
 {
-	if (m==true)
-		switch (rand()%5)
-		{
-			case 0:break;
-			case 1:move(x,y,'h');break;
-			case 2:move(x,y,'j');break;
-			case 3:move(x,y,'k');break;
-			case 4:move(x,y,'l');break;
-		}
+	for (int i=0;i<c;i++)
+		if (m==true)
+			switch (rand()%5)
+			{
+				case 0:break;
+				case 1:move(x,y,'h');break;
+				case 2:move(x,y,'j');break;
+				case 3:move(x,y,'k');break;
+				case 4:move(x,y,'l');break;
+			}
 }
 void Tile::wall(int x,int y)
 {

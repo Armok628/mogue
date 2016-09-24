@@ -24,13 +24,19 @@ void Display::placeplayer(int x,int y)
 	field[y][x].setc(_L_BLUE);
 	field[y][x].m=false;
 }
-void Display::statichouse()
+int Display::house(int x,int y,int w,int h,char d)
 {
-	for (int y=15;y<20;y++)
-		for (int x=15;x<25;x++)
-			field[x][y].wall(x,y);
-	for (int y=16;y<19;y++)
-		for (int x=16;x<24;x++)
-			field[x][y].floor(x,y);
-	field[15][17].floor(15,17);
+	for (int i1=0;i1<w;i1++)
+		for (int i2=0;i2<h;i2++)
+			field[x+i1][y+i2].wall(x+i1,y+i2);
+	for (int i1=1;i1<w-1;i1++)
+		for (int i2=1;i2<h-1;i2++)
+			field[x+i1][y+i2].floor(x+i1,y+i2);
+	switch (d)
+	{
+		case 'h':field[x][y+(h/2)].floor(x,y+(h/2));break;
+		case 'j':field[x+(w/2)][y+h-1].floor(x+(w/2),y+h-1);break;
+		case 'k':field[x+(w/2)][y].floor(x+(w/2),y+(h/2));break;
+		case 'l':field[x+w-1][y+(h/2)].floor(x+w-1,y+(h/2));break;
+	}
 }
