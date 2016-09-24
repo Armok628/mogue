@@ -7,8 +7,6 @@ static char _L_GREEN[]="\033[1;32m";
 static char _GRAY[]="\033[0;39m";
 static char _WHITE[]="\033[1;39m";
 static char _YELLOW[]="\033[1;33m";
-Tile field[64][32];
-int px,py;
 bool m;
 Tile::Tile()
 {
