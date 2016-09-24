@@ -72,7 +72,6 @@ void Tile::floor(int x,int y)
 }
 void Tile::animal()
 {
-	grass();
 	m=true;
 	fg='D';
 	fc=_YELLOW;

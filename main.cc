@@ -15,23 +15,36 @@ int main()
 {
 	int ix,iy,iw,ih;
 	char id[64];
-	cout<<"--House parameters--"<<endl;
-	cout<<"X : ";cin>>ix;
-	cout<<"Y : ";cin>>iy;
-	cout<<"W : ";cin>>iw;
-	cout<<"H : ";cin>>ih;
-	cout<<"D : ";cin>>id;
-
-	initscr();
-	srand(time(0));
 	for (int y=0;y<32;y++)
 		for (int x=0;x<64;x++)
 			field[x][y].grass();
-	d.house(ix,iy,iw,ih,id[0]);
+
+	cout<<"--House parameters--"<<endl;
+	do
+	{
+		cout<<"X (int) : ";cin>>ix;
+		cout<<"Y (int) : ";cin>>iy;
+		cout<<"W (int) : ";cin>>iw;
+		cout<<"H (int) : ";cin>>ih;
+		cout<<"D (h/j/k/l) : ";cin>>id;
+		d.house(ix,iy,iw,ih,id[0]);
+		cout<<endl<<"Another house? (y/n) : ";
+		cin>>id;
+	} while (id[0]=='y');
+
+	cout<<"--Animal parameters--"<<endl;
+	do
+	{
+		cout<<"X (int) : ";cin>>ix;
+		cout<<"Y (int) : ";cin>>iy;
+		field[ix][iy].animal();
+		cout<<"Another animal? (y/n) ";cin>>id;
+	} while (id[0]=='y');
+
+	srand(time(0));
 	d.placeplayer(10,10);
-	field[32][16].animal();
-	field[33][16].animal();
 	px=10;py=10;
+	initscr();
 	do
 	{
 		clear();
