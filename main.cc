@@ -8,7 +8,7 @@
 #include "tile.h"
 using namespace std;
 static char input[64];
-static char ione;
+static char ic;
 static bool quit=false;
 static Display d;
 int main()
@@ -77,10 +77,10 @@ int main()
 		clear();
 		refresh();
 		d.draw();
-		ione=getch();
-		if (ione=='q')
+		ic=getch();
+		if (ic=='q')
 			quit=true;
-		else field[px][py].move(px,py,ione);
+		else field[px][py].move(px,py,ic);
 		for (int y=0;y<32;y++)
 			for (int x=0;x<64;x++)
 				field[x][y].rmove(x,y,1);

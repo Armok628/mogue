@@ -42,13 +42,17 @@ void Tile::rmove(int x,int y,int c)
 {
 	for (int i=0;i<c;i++)
 		if (m==true)
-			switch (rand()%5)
+			switch (rand()%9)
 			{
 				case 0:break;
 				case 1:move(x,y,'h');break;
 				case 2:move(x,y,'j');break;
 				case 3:move(x,y,'k');break;
 				case 4:move(x,y,'l');break;
+				case 5:move(x,y,'y');break;
+				case 6:move(x,y,'u');break;
+				case 7:move(x,y,'b');break;
+				case 8:move(x,y,'n');break;
 			}
 }
 void Tile::wall(int x,int y)
@@ -109,9 +113,17 @@ void Tile::move(int x,int y,char c)
 		case 'j':offset[1]=1;break;
 		case 'k':offset[1]=-1;break;
 		case 'l':offset[0]=1;break;
+		case 'y':offset[0]=-1;offset[1]=-1;break;
+		case 'u':offset[0]=1;offset[1]=-1;break;
+		case 'b':offset[0]=-1;offset[1]=1;break;
+		case 'n':offset[0]=1;offset[1]=1;break;
 	}
 	int nx=x+offset[0];int ny=y+offset[1];
-	if (!(c=='h'&&x==0||c=='j'&&y==31||c=='k'&&y==0||c=='l'&&x==63)&&field[nx][ny].fg==' ')
+	if (!((c=='h'||c=='y'||c=='b')&&x==0
+			||(c=='j'||c=='b'||c=='n')&&y==31
+			||(c=='k'||c=='y'||c=='u')&&y==0
+			||(c=='l'||c=='u'||c=='n')&&x==63)
+			&&field[nx][ny].fg==' ')
 	{
 		field[nx][ny].fg=field[x][y].fg;
 		field[nx][ny].fc=field[x][y].fc;
