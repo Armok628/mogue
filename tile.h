@@ -14,7 +14,6 @@ class Tile
 		char ret();
 		char* retc();
 		void move(int x,int y,char c);
-		void pmove(char c);
 		void rmove(int x,int y,int c);
 		bool m;
 		char bg,fg,*bc,*fc;
