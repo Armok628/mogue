@@ -20,9 +20,10 @@ void Display::draw()
 }
 void Display::placeplayer(int x,int y)
 {
-	field[y][x].set('@');
-	field[y][x].setc(_L_BLUE);
-	field[y][x].m=false;
+	field[x][y].set('@');
+	field[x][y].setc(_L_BLUE);
+	field[x][y].m=false;
+	px=x;py=y;
 }
 int Display::house(int x,int y,int w,int h,char d)
 {

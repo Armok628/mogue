@@ -7,19 +7,48 @@
 #include "display.h"
 #include "tile.h"
 using namespace std;
-static bool quit = false;
 static char input[64];
 static char ione;
+static bool quit=false;
 static Display d;
 int main()
 {
-	int ix,iy,iw,ih;
+	srand(time(0));
+	int ix,iy,iw,ih,in;
 	char id[64];
 	for (int y=0;y<32;y++)
 		for (int x=0;x<64;x++)
 			field[x][y].grass();
-
+	cout<<"--Player parameters--"<<endl;
+	cout<<"X (int) : ";cin>>ix;
+	cout<<"Y (int) : ";cin>>iy;
+	d.placeplayer(ix,iy);
 	cout<<"--House parameters--"<<endl;
+	cout<<"# (int) : ";cin>>in;
+	for (int i=0;i<in;i++)
+	{
+		quit=false;
+		ix=rand()%64;iy=rand()%32;
+		iw=3+rand()%32;ih=3+rand()%16;
+		switch (rand()%4)
+		{
+			case 0:id[0]='h';break;
+			case 1:id[0]='j';break;
+			case 2:id[0]='k';break;
+			case 3:id[0]='l';break;
+		}
+		if (ix+iw>63||iy+ih>31)
+			quit=true;
+		else
+			for (int i1=ix;i1<=ix+iw;i1++)
+				for (int i2=iy;i2<=iy+ih;i2++)
+					if (field[i1][i2].fg=='@')
+						quit=true;
+		if (!quit)
+			d.house(ix,iy,iw,ih,id[0]);
+		else i--;
+	}
+	/*//Manual house placement
 	do
 	{
 		cout<<"X (int) : ";cin>>ix;
@@ -31,20 +60,18 @@ int main()
 		cout<<endl<<"Another house? (y/n) : ";
 		cin>>id;
 	} while (id[0]=='y');
-
+	*/
 	cout<<"--Animal parameters--"<<endl;
-	do
+	cout<<"# (int) : ";cin>>in;
+	for (int i=0;i<in;i++)
 	{
-		cout<<"X (int) : ";cin>>ix;
-		cout<<"Y (int) : ";cin>>iy;
-		field[ix][iy].animal();
-		cout<<"Another animal? (y/n) ";cin>>id;
-	} while (id[0]=='y');
-
-	srand(time(0));
-	d.placeplayer(10,10);
-	px=10;py=10;
+		ix=rand()%64;iy=rand()%32;
+		if (field[ix][iy].fg!='%')
+			field[ix][iy].animal();
+		else i--;
+	}
 	initscr();
+	quit=false;
 	do
 	{
 		clear();
