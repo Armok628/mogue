@@ -41,3 +41,23 @@ int Display::house(int x,int y,int w,int h,char d)
 		case 'l':field[x+w-1][y+(h/2)].floor(x+w-1,y+(h/2));break;
 	}
 }
+void Display::cullwalls()
+{
+	int r;
+	do
+	{
+		r=0;
+		for (int x=1;x<63;x++)
+			for (int y=1;y<31;y++)
+			{
+				if (field[x][y].fg=='%'&&(
+						(field[x+1][y].bg=='#'&&field[x-1][y].bg=='#')||
+						(field[x][y+1].bg=='#'&&field[x][y-1].bg=='#')))
+				{
+					field[x][y].floor(x,y);
+					r++;
+				}
+			}
+		cout<<r<<endl;
+	} while (r>0);
+}

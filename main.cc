@@ -70,6 +70,7 @@ int main()
 			field[ix][iy].animal();
 		else i--;
 	}
+	d.cullwalls();
 	initscr();
 	quit=false;
 	do
