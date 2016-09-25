@@ -7,5 +7,6 @@ class Display
 		void placeplayer(int x,int y);
 		void cullwalls();
 		int house(int x,int y,int w,int h,char d);
+		int dungeon(int x,int y,int w,int h,char d);
 };
 #endif

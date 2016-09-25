@@ -28,7 +28,7 @@ int main()
 	for (int i=0;i<in;i++)
 	{
 		quit=false;
-		ix=rand()%64;iy=rand()%32;
+		ix=1+rand()%+62;iy=1+rand()%30;
 		iw=3+rand()%32;ih=3+rand()%16;
 		switch (rand()%4)
 		{
@@ -37,15 +37,23 @@ int main()
 			case 2:id[0]='k';break;
 			case 3:id[0]='l';break;
 		}
-		if (ix+iw>63||iy+ih>31)
+		if (ix+iw>62||iy+ih>30)
 			quit=true;
 		else
 			for (int i1=ix;i1<=ix+iw;i1++)
+			{
+				if (quit)
+					break;
 				for (int i2=iy;i2<=iy+ih;i2++)
 					if (field[i1][i2].fg=='@')
+					{
 						quit=true;
+						break;
+					}
+			}
 		if (!quit)
-			d.house(ix,iy,iw,ih,id[0]);
+			//d.house(ix,iy,iw,ih,id[0]);
+			d.dungeon(ix,iy,iw,ih,id[0]);
 		else i--;
 	}
 	/*//Manual house placement

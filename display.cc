@@ -40,6 +40,42 @@ int Display::house(int x,int y,int w,int h,char d)
 		case 'k':field[x+(w/2)][y].floor(x+(w/2),y+(h/2));break;
 		case 'l':field[x+w-1][y+(h/2)].floor(x+w-1,y+(h/2));break;
 	}
+	return 0;
+}
+int Display::dungeon(int x,int y,int w,int h,char d)
+{
+	bool n=true;
+	/*
+	for (int i=y;i<y+h;i++)
+		if (field[x][i].fg=='%')
+			n=false;
+	if (n)
+		for (int i=x;i<x+w;i++)
+			if (field[i][y+h].fg=='%')
+				n=false;
+	if (n)
+		for (int i=x;i<x+w;i++)
+			if (field[i][y].fg=='%')
+				n=false;
+	if (n)
+		for (int i=y;i<y+h;i++)
+			if (field[x+w][i].fg=='%')
+				n=false;
+	*/
+	for (int ix=x-1;ix<x+w+1;ix++)
+	{
+		if (!n)
+			break;
+		else for (int iy=y-1;iy<y+h+1;iy++)
+			if (field[ix][iy].fg=='%'||field[ix][iy].bg=='#')
+			{
+				n=false;
+				break;
+			}
+	}
+	if (n)
+		return house(x,y,w,h,d);
+	else return 1;
 }
 void Display::cullwalls()
 {
@@ -58,6 +94,6 @@ void Display::cullwalls()
 					r++;
 				}
 			}
-		cout<<r<<endl;
+		//cout<<r<<endl;
 	} while (r>0);
 }
