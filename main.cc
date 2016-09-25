@@ -80,7 +80,7 @@ int main()
 		ione=getch();
 		if (ione=='q')
 			quit=true;
-		else field[px][py].pmove(ione);
+		else field[px][py].move(px,py,ione);
 		for (int y=0;y<32;y++)
 			for (int x=0;x<64;x++)
 				field[x][y].rmove(x,y,1);

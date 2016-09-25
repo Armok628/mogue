@@ -115,26 +115,9 @@ void Tile::move(int x,int y,char c)
 	{
 		field[nx][ny].fg=field[x][y].fg;
 		field[nx][ny].fc=field[x][y].fc;
-		field[nx][ny].m=true;field[x][y].m=false;
+		if (fg!='@')
+		{field[nx][ny].m=true;field[x][y].m=false;}
+		else {px=nx,py=ny;}
 		field[x][y].fg=' ';
-	}
-}
-void Tile::pmove(char c) // TO-DO: Replace pmove() with reference to move()
-{
-	int offset[2];offset[0]=0;offset[1]=0;
-	switch (c)
-	{
-		case 'h':offset[0]=-1;break;
-		case 'j':offset[1]=1;break;
-		case 'k':offset[1]=-1;break;
-		case 'l':offset[0]=1;break;
-	}
-	int nx=px+offset[0];int ny=py+offset[1];
-	if (!(c=='h'&&px==0||c=='j'&&py==31||c=='k'&&py==0||c=='l'&&px==63)&&field[nx][ny].fg==' ')
-	{
-		field[nx][ny].fg=field[px][py].fg;
-		field[nx][ny].fc=field[px][py].fc;
-		field[px][py].fg=' ';
-		px=nx;py=ny;
 	}
 }
