@@ -82,11 +82,22 @@ void Tile::floor(int x,int y)
 }
 int Tile::animal()
 {
-	if (fg!='%'&&bg!='#')// If this tile is not a wall or floor:
+	if (fg!='%'&&bg!='#'&&fg!='D'&&fg!='@')// If this tile is not a wall, floor, animal, or player:
 	{
 		m=true;// This tile should now move.
-		fg='D';// This tile's foreground should be D (for deer).
+		fg='A';// This tile's foreground should be D (for deer).
 		fc=_YELLOW;// This tile should be yellow.
+		return 0;// Report success.
+	}
+	return 1;// Otherwise, report failure.
+}
+int Tile::monster()
+{
+	if (bg=='#'&&fg==' ')// If the tile is a clear floor:
+	{
+		m=true;// Allow random movement.
+		fg='M';// Set the foreground to M for monster.
+		fc=_RED;// Set the monster's color to red.
 		return 0;// Report success.
 	}
 	return 1;// Otherwise, report failure.
@@ -113,7 +124,7 @@ char* Tile::retc()
 		return bc;// Return the background color.
 	return fc;// Otherwise, return the foreground color.
 }
-void Tile::move(int x,int y,char c)
+int Tile::move(int x,int y,char c)
 {
 	int offset[2];offset[0]=0;offset[1]=0;// Initialize the offset coordinates.
 	switch (c)// Act based on parameter c.
@@ -132,12 +143,32 @@ void Tile::move(int x,int y,char c)
 			||(c=='j'||c=='b'||c=='n')&&y==31// ...nor South at Y equals thirty-one...
 			||(c=='k'||c=='y'||c=='u')&&y==0// ...nor North at Y equals zero...
 			||(c=='l'||c=='u'||c=='n')&&x==63)// ...nor East at X equals sixty-three...
-			&&(field[nx][ny].fg==' '||field[nx][ny].fg=='D'))// ...and the tile to be moved to has an empty foreground:
+			&&field[nx][ny].fg!='%')// ...and the tile to be moved to is not a wall:
 	{
-		if (field[nx][ny].fg=='D')// If the tile moved to has an animal on it:
+		if (field[nx][ny].fg=='A')// If the tile moved to is an animal:
 		{
-			field[nx][ny].bc=_RED;// Change the background color to represent blood.
-			field[nx][ny].m=false;// Disallow random movement on the new tile to prevent random player movement
+			if (field[x][y].fg=='A')// If the tile moving is also an animal:
+				return 1;// Report failure.
+			field[nx][ny].kill();// Otherwise, kill the animal.
+		}
+		if (field[nx][ny].fg=='M')// If the tile moved to is a monster:
+		{
+			if (field[x][y].fg=='A')// If the tile moving is an animal:
+			{
+				field[x][y].kill();// Kill the animal.
+				return 1;// Report failure (for the animal, anyway).
+			}
+			if (field[x][y].fg=='@'&&(rand()%2)==0)// If the tile moving is the player:
+				field[nx][ny].kill();// Kill the monster.
+			if (field[x][y].fg=='M')// If the tile moving is a monster:
+				return 1;// Report failure.
+		}
+		if (field[nx][ny].fg=='@')// If the tile moved to is the player:
+		{
+			if (field[x][y].fg=='A')// If the tile moving is an animal:
+				return 1;// Report failure.
+			if (field[x][y].fg=='M')// If the tile moving is a monster:
+				field[x][y].kill();// Kill the player.
 		}
 		field[nx][ny].fg=field[x][y].fg;// Set the new tile's foreground...
 		field[nx][ny].fc=field[x][y].fc;// ...and set the new tile's color.
@@ -146,4 +177,11 @@ void Tile::move(int x,int y,char c)
 		else {px=nx,py=ny;}// Otherwise, set the new player coordinate index.
 		field[x][y].fg=' ';// Set the old tile to its new vacant state.
 	}
+	return 0;// Report success.
+}
+void Tile::kill()
+{
+	bc=_RED;// Set the background to a blood color.
+	m=false;// Disallow random movement.
+	fg=' ';// Remove the foreground character.
 }

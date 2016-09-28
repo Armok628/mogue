@@ -8,12 +8,14 @@ class Tile
 		void wall(int x,int y);
 		void floor(int x,int y);
 		int animal();
+		int monster();
 		void set(char c);
 		void setc(char* c);
 		char ret();
 		char* retc();
-		void move(int x,int y,char c);
+		int move(int x,int y,char c);
 		void rmove(int x,int y,int c);
+		void kill();
 		bool m;
 		char bg,fg,*bc,*fc;
 };
