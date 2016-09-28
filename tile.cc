@@ -57,28 +57,37 @@ void Tile::rmove(int x,int y,int c)
 }
 void Tile::wall(int x,int y)
 {
-	m=false;
-	bg=fg='%';
-	if (x%2!=y%2)
-		bc=fc=_RED;
-	else bc=fc=_L_RED;
-
+	if (fg!='@')
+	{
+		bg=fg='%';
+		if (x%2!=y%2)
+			bc=fc=_RED;
+		else bc=fc=_L_RED;
+	}
+	else floor(x,y);
 }
 void Tile::floor(int x,int y)
 {
-	m=false;
 	bg='#';
-	fg=' ';
-	fc=_RESET_COLOR;
+	if (fg!='@')
+	{
+		fg=' ';
+		fc=_RESET_COLOR;
+	}
 	if (x%2!=y%2)
-		bc=fc=_GRAY;
-	else bc=fc=_WHITE;
+		bc=_GRAY;
+	else bc=_WHITE;
 }
-void Tile::animal()
+int Tile::animal()
 {
-	m=true;
-	fg='D';
-	fc=_YELLOW;
+	if (fg!='%'&&bg!='#')
+	{
+		m=true;
+		fg='D';
+		fc=_YELLOW;
+		return 0;
+	}
+	return 1;
 }
 int Tile::set(char c)
 {

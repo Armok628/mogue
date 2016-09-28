@@ -45,23 +45,6 @@ int Display::house(int x,int y,int w,int h,char d)
 int Display::dungeon(int x,int y,int w,int h,char d)
 {
 	bool n=true;
-	/*
-	for (int i=y;i<y+h;i++)
-		if (field[x][i].fg=='%')
-			n=false;
-	if (n)
-		for (int i=x;i<x+w;i++)
-			if (field[i][y+h].fg=='%')
-				n=false;
-	if (n)
-		for (int i=x;i<x+w;i++)
-			if (field[i][y].fg=='%')
-				n=false;
-	if (n)
-		for (int i=y;i<y+h;i++)
-			if (field[x+w][i].fg=='%')
-				n=false;
-	*/
 	for (int ix=x-1;ix<x+w+1;ix++)
 	{
 		if (!n)
@@ -74,7 +57,10 @@ int Display::dungeon(int x,int y,int w,int h,char d)
 			}
 	}
 	if (n)
-		return house(x,y,w,h,d);
+	{
+		house(x,y,w,h,d);
+		return 0;
+	}
 	else return 1;
 }
 void Display::cullwalls()

@@ -8,7 +8,7 @@ class Tile
 		void grass();
 		void wall(int x,int y);
 		void floor(int x,int y);
-		void animal();
+		int animal();
 		int set(char c);
 		int setc(char* c);
 		char ret();
