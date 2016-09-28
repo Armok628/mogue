@@ -132,8 +132,13 @@ void Tile::move(int x,int y,char c)
 			||(c=='j'||c=='b'||c=='n')&&y==31// ...nor South at Y equals thirty-one...
 			||(c=='k'||c=='y'||c=='u')&&y==0// ...nor North at Y equals zero...
 			||(c=='l'||c=='u'||c=='n')&&x==63)// ...nor East at X equals sixty-three...
-			&&field[nx][ny].fg==' ')// ...and the tile to be moved to has an empty foreground:
+			&&(field[nx][ny].fg==' '||field[nx][ny].fg=='D'))// ...and the tile to be moved to has an empty foreground:
 	{
+		if (field[nx][ny].fg=='D')// If the tile moved to has an animal on it:
+		{
+			field[nx][ny].bc=_RED;// Change the background color to represent blood.
+			field[nx][ny].m=false;// Disallow random movement on the new tile to prevent random player movement
+		}
 		field[nx][ny].fg=field[x][y].fg;// Set the new tile's foreground...
 		field[nx][ny].fc=field[x][y].fc;// ...and set the new tile's color.
 		if (fg!='@')// If this tile is not the player:
