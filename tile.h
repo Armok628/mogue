@@ -4,13 +4,12 @@ class Tile
 {
 	public:
 		Tile();
-		Tile(char b,char f,bool g);
 		void grass();
 		void wall(int x,int y);
 		void floor(int x,int y);
 		int animal();
-		int set(char c);
-		int setc(char* c);
+		void set(char c);
+		void setc(char* c);
 		char ret();
 		char* retc();
 		void move(int x,int y,char c);
