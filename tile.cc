@@ -132,6 +132,7 @@ int Tile::move(int x,int y,char c)
 		case 'u':offset[0]=1;offset[1]=-1;break;// If Northeast, set X offset to one, Y offset to negative one.
 		case 'b':offset[0]=-1;offset[1]=1;break;// If Southwest, set X offset to negative one, Y offset to one.
 		case 'n':offset[0]=1;offset[1]=1;break;// If Southeast, set both X and Y offsets to one.
+		default :return 1;// If no relevant key was pressed, report failure.
 	}
 	int nx=x+offset[0];int ny=y+offset[1];// Set new X and new Y variables.
 	if (!((c=='h'||c=='y'||c=='b')&&x==0// If the player is not moving West at X equals zero...
