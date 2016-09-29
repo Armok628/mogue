@@ -6,6 +6,7 @@ static char _GREEN[]="\033[0;32m";
 static char _L_GREEN[]="\033[1;32m";
 static char _GRAY[]="\033[0;39m";
 static char _WHITE[]="\033[1;39m";
+static char _BROWN[]="\033[0;33m";
 static char _YELLOW[]="\033[1;33m";
 static char _RED[]="\033[0;31m";
 static char _L_RED[]="\033[1;31m";
@@ -86,7 +87,7 @@ int Tile::animal()
 	{
 		m=true;// This tile should now move.
 		fg='A';// This tile's foreground should be D (for deer).
-		fc=_YELLOW;// This tile should be yellow.
+		fc=_BROWN;// This tile should be yellow.
 		return 0;// Report success.
 	}
 	return 1;// Otherwise, report failure.
@@ -158,7 +159,7 @@ int Tile::move(int x,int y,char c)
 				field[x][y].kill();// Kill the animal.
 				return 1;// Report failure (for the animal, anyway).
 			}
-			if (field[x][y].fg=='@'&&(rand()%2)==0)// If the tile moving is the player:
+			if (field[x][y].fg=='@')// If the tile moving is the player:
 				field[nx][ny].kill();// Kill the monster.
 			if (field[x][y].fg=='M')// If the tile moving is a monster:
 				return 1;// Report failure.
@@ -174,7 +175,11 @@ int Tile::move(int x,int y,char c)
 		field[nx][ny].fc=field[x][y].fc;// ...and set the new tile's color.
 		if (fg!='@')// If this tile is not the player:
 		{field[nx][ny].m=true;field[x][y].m=false;}// Allow the new tile to move, and vice versa.
-		else {px=nx,py=ny;}// Otherwise, set the new player coordinate index.
+		else 
+		{
+			px=nx,py=ny;// Otherwise, set the new player coordinate index.
+			field[nx][ny].m=false;// Make sure that random movements for the player's new tile are not allowed.
+		}
 		field[x][y].fg=' ';// Set the old tile to its new vacant state.
 	}
 	return 0;// Report success.
