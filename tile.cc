@@ -18,17 +18,8 @@ Tile::Tile()
 {
 	grass();// By default, each tile should be grass.
 }
-/*// DEPRECATED: Custom tile creation:
-Tile::Tile(char b,char f,bool g)
-{
-	m=g;
-	bg=b;
-	fg=f;
-}
-*/
 void Tile::grass()
 {
-	m=false;// Grass should not move.
 	fg=' ';// Grass should have no foreground.
 	switch(rand()%2)// Pick randomly between two choices:
 	{
@@ -88,7 +79,6 @@ int Tile::animal()
 {
 	if (fg!='%'&&bg!='#'&&fg!='D'&&fg!='@')// If this tile is not a wall, floor, animal, or player:
 	{
-		m=true;// This tile should now move.
 		fg='A';// This tile's foreground should be D (for deer).
 		fc=_BROWN;// Animals should be displayed as brown.
 		return 0;// Report success.
@@ -99,7 +89,6 @@ int Tile::monster()
 {
 	if (bg=='#'&&fg==' ')// If the tile is a clear floor:
 	{
-		m=true;// Allow random movement.
 		fg='M';// Set the foreground to M for monster.
 		fc=_D_GRAY;// Set the monster's color to purple.
 		return 0;// Report success.
@@ -130,6 +119,8 @@ char* Tile::retc()
 }
 int Tile::move(int x,int y,char c)
 {
+	if (field[x][y].fg==' ')// If the tile supposed to be moved is empty:
+		return 1;// Report failure.
 	int offset[2];offset[0]=0;offset[1]=0;// Initialize the offset coordinates.
 	switch (c)// Act based on parameter c.
 	{
@@ -179,13 +170,8 @@ int Tile::move(int x,int y,char c)
 		}
 		field[nx][ny].fg=field[x][y].fg;// Set the new tile's foreground...
 		field[nx][ny].fc=field[x][y].fc;// ...and set the new tile's color.
-		if (fg!='@')// If this tile is not the player:
-		{field[nx][ny].m=true;field[x][y].m=false;}// Allow the new tile to move, and vice versa.
-		else 
-		{
-			px=nx,py=ny;// Otherwise, set the new player coordinate index.
-			field[nx][ny].m=false;// Make sure that random movements for the player's new tile are not allowed.
-		}
+		if (field[nx][ny].fg=='@')// If the tile moved is the player:
+		{px=nx;py=ny;}// Update the player coordinate index.
 		field[x][y].fg=' ';// Set the old tile to its new vacant state.
 	}
 	return 0;// Report success.

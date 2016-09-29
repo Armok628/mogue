@@ -84,6 +84,12 @@ int main()
 		refresh();// Refresh the screen to make changes.
 		cout<<"Monsters left: "<<c<<'\r';c=0;// Print the number of monsters left and reset the counter.
 		d.draw();// Recursively draw every tile.
+		for (int x=0;x<64;x++)
+			for (int y=0;y<32;y++)
+				if (field[x][y].fg=='A'||field[x][y].fg=='M')
+					field[x][y].m=true;
+				else
+					field[x][y].m=false;
 		ic=getch();// Get unbuffered user input as char.
 		if (ic=='q')// If the input was a Q:
 			break; // Quit immediately.
