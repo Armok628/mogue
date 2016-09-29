@@ -84,12 +84,12 @@ int main()
 		refresh();// Refresh the screen to make changes.
 		cout<<"Monsters left: "<<c<<'\r';c=0;// Print the number of monsters left and reset the counter.
 		d.draw();// Recursively draw every tile.
-		for (int x=0;x<64;x++)
-			for (int y=0;y<32;y++)
-				if (field[x][y].fg=='A'||field[x][y].fg=='M')
-					field[x][y].m=true;
-				else
-					field[x][y].m=false;
+		for (int x=0;x<64;x++)// For every column:
+			for (int y=0;y<32;y++)// For every row::
+				if (field[x][y].fg=='A'||field[x][y].fg=='M')// If the tile is a monster or animal:
+					field[x][y].m=true;// Allow it to move randomly.
+				else// Otherwise:
+					field[x][y].m=false;// Disallow random movement.
 		ic=getch();// Get unbuffered user input as char.
 		if (ic=='q')// If the input was a Q:
 			break; // Quit immediately.
