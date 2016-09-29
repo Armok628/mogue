@@ -3,4 +3,5 @@
 #include "tile.h"
 extern Tile field[64][32];
 extern int px,py;
+extern bool dead;
 #endif

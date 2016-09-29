@@ -4,12 +4,15 @@
 static char _RESET_COLOR[]="\033[0m";
 static char _GREEN[]="\033[0;32m";
 static char _L_GREEN[]="\033[1;32m";
+static char _D_GRAY[]="\033[1;30m";
 static char _GRAY[]="\033[0;39m";
 static char _WHITE[]="\033[1;39m";
 static char _BROWN[]="\033[0;33m";
 static char _YELLOW[]="\033[1;33m";
 static char _RED[]="\033[0;31m";
 static char _L_RED[]="\033[1;31m";
+static char _PURPLE[]="\033[0;35m";
+bool dead;
 bool m;
 Tile::Tile()
 {
@@ -87,7 +90,7 @@ int Tile::animal()
 	{
 		m=true;// This tile should now move.
 		fg='A';// This tile's foreground should be D (for deer).
-		fc=_BROWN;// This tile should be yellow.
+		fc=_BROWN;// Animals should be displayed as brown.
 		return 0;// Report success.
 	}
 	return 1;// Otherwise, report failure.
@@ -98,7 +101,7 @@ int Tile::monster()
 	{
 		m=true;// Allow random movement.
 		fg='M';// Set the foreground to M for monster.
-		fc=_RED;// Set the monster's color to red.
+		fc=_D_GRAY;// Set the monster's color to purple.
 		return 0;// Report success.
 	}
 	return 1;// Otherwise, report failure.
@@ -169,7 +172,10 @@ int Tile::move(int x,int y,char c)
 			if (field[x][y].fg=='A')// If the tile moving is an animal:
 				return 1;// Report failure.
 			if (field[x][y].fg=='M')// If the tile moving is a monster:
-				field[x][y].kill();// Kill the player.
+			{
+				field[nx][ny].kill();// Kill the player.
+				dead=true;// Let the records show that the forces of good are vanquished.
+			}
 		}
 		field[nx][ny].fg=field[x][y].fg;// Set the new tile's foreground...
 		field[nx][ny].fc=field[x][y].fc;// ...and set the new tile's color.

@@ -25,6 +25,7 @@ int main()
 	cout<<"Y (int) : ";cin>>iy;
 	d.placeplayer(ix,iy);
 	*/
+	dead=false;
 	d.placeplayer(rand()%63,rand()%31);// Place the player randomly on the field.
 	cout<<"--House parameters--"<<endl;// Prompt for input.
 	cout<<"# (int) : ";cin>>in;// Get input for number of houses.
@@ -86,7 +87,8 @@ int main()
 		ic=getch();// Get unbuffered user input as char.
 		if (ic=='q')// If the input was a Q:
 			break; // Quit immediately.
-		else field[px][py].move(px,py,ic);// Otherwise, try to move the player in that direction.
+		else if (!dead)// Otherwise, if the player is not dead:
+			field[px][py].move(px,py,ic);// Try to move the player in that direction.
 		for (int x=0;x<64;x++)// For every tile...
 			for (int y=0;y<32;y++)// ...
 				field[x][y].rmove(x,y,1);// ...try to move each randomly.
