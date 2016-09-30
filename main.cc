@@ -72,17 +72,21 @@ int main()
 			i--;// ...try again.
 	}
 	d.cullwalls();// Recursively destroy walls flanked by floors.
-	int c=0;// Create a new local variable to count monsters.
+	int mc,ac;// Create new local variables to count creatures.
+	mc=ac=0; // Initialize local counting variables.
 	initscr();// Begin ncurses screen output.
 	do// At least once, but repeatedly:
 	{
 		for (int ix=0;ix<64;ix++)// For every column...
 			for (int iy=0;iy<32;iy++)// ...for every row...
 				if (field[ix][iy].fg=='M')// ...if the tile is a monster:
-					c++;// Increase the monster count meter.
+					mc++;// Increase the monster count meter.
+				else if (field[ix][iy].fg=='A')// If the tile is an animal:
+					ac++;// Increase the animal count meter.
 		clear();// Clear the whole screen.
 		refresh();// Refresh the screen to make changes.
-		cout<<"Monsters left: "<<c<<'\r';c=0;// Print the number of monsters left and reset the counter.
+		cout<<"Monsters left: "<<mc<<endl<<'\r';mc=0;// Print the number of monsters left and reset the counter.
+		cout<<"Animals left: "<<ac<<'\r';ac=0;// Print the number of animals left and reset the counter.
 		d.draw();// Recursively draw every tile.
 		for (int x=0;x<64;x++)// For every column:
 			for (int y=0;y<32;y++)// For every row::
