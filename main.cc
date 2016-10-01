@@ -72,6 +72,7 @@ int main()
 			i--;// ...try again.
 	}
 	d.cullwalls();// Recursively destroy walls flanked by floors.
+	d.makedoors();// Recursively create doors on suitable floors.
 	int mc,ac;// Create new local variables to count creatures.
 	mc=ac=0; // Initialize local counting variables.
 	initscr();// Begin ncurses screen output.

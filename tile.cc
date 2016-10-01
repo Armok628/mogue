@@ -75,6 +75,16 @@ void Tile::floor(int x,int y)
 		bc=_GRAY;// ...gray...
 	else bc=_WHITE;// ...and light gray.
 }
+void Tile::door()
+{
+	fg='+';// The foreground of a door is a plus.
+	bg='-';// The background of a door is pre-set to a minus symbol to reduce operations needed for opening.
+	fc=bc=_BROWN;// Doors will always be brown.
+}
+void Tile::open()
+{
+	fg=' ';// Remove the foreground to allow ingress. The background is already set, so nothing else needs to be done.
+}
 int Tile::animal()
 {
 	if (fg!='%'&&bg!='#'&&fg!='D'&&fg!='@')// If this tile is not a wall, floor, animal, or player:
@@ -141,6 +151,12 @@ int Tile::move(int x,int y,char c)
 			||(c=='l'||c=='u'||c=='n')&&x==63)// ...nor East at X equals sixty-three...
 			&&field[nx][ny].fg!='%')// ...and the tile to be moved to is not a wall:
 	{
+		if (field[nx][ny].fg=='+')// If the tile walked to is a door:
+		{
+			if (field[x][y].fg=='@'||field[x][y].fg=='M')// If the tile moving is a monster or the player:
+				field[nx][ny].open();// Open the door.
+			return 1;// Report failure. (As in, do not move the player in the same turn as opening.
+		}
 		if (field[nx][ny].fg=='A')// If the tile moved to is an animal:
 		{
 			if (field[x][y].fg=='A')// If the tile moving is also an animal:

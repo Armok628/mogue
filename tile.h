@@ -7,6 +7,8 @@ class Tile
 		void grass();
 		void wall(int x,int y);
 		void floor(int x,int y);
+		void door();
+		void open();
 		int animal();
 		int monster();
 		void set(char c);

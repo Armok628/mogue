@@ -82,3 +82,20 @@ void Display::cullwalls()
 			}
 	} while (r>0);// Continue until no more walls have been removed in an iteration.
 }
+void Display::makedoors()
+{
+	for (int x1=0;x1<64;x1++)// For every column:
+		for (int y1=0;y1<32;y1++)// For every row:
+			if (field[x1][y1].bg=='#'&&// If the tile is a floor and...
+					((field[x1-1][y1].fg=='%'&&field[x1+1][y1].fg=='%')!=// is flanked horizontally by walls,
+					(field[x1][y1-1].fg=='%'&&field[x1][y1+1].fg=='%')))// xor vertically:
+			{
+				int c=0;// Start a new counter.
+				for (int x2=-1;x2<=1;x2++)// For columns from negative one to one:
+					for (int y2=-1;y2<=1;y2++)// For rows from negative one to one:
+						if (field[x1+x2][y1+y2].fg=='%')// Relative to the floor, if the tile is a wall:
+							c++;// Increase the counter.
+				if (c<5)// If there are four or fewer walls adjacent to the floor:
+					field[x1][y1].door();// Place a door on the tile.
+			}
+}
