@@ -87,7 +87,7 @@ void Tile::open()
 }
 int Tile::animal()
 {
-	if (fg!='%'&&bg!='#'&&fg!='D'&&fg!='@')// If this tile is not a wall, floor, animal, or player:
+	if (fg!='%'&&bg!='#'&&fg!='@'&&fg!='A'&&fg!='&')// If this tile is not a wall, floor, animal, or player:
 	{
 		fg='A';// This tile's foreground should be D (for deer).
 		fc=_BROWN;// Animals should be displayed as brown.
@@ -99,7 +99,7 @@ int Tile::monster()
 {
 	if (bg=='#'&&fg==' ')// If the tile is a clear floor:
 	{
-		fg='M';// Set the foreground to M for monster.
+		fg='&';// Set the foreground to M for monster.
 		fc=_D_GRAY;// Set the monster's color to purple.
 		return 0;// Report success.
 	}
@@ -153,7 +153,7 @@ int Tile::move(int x,int y,char c)
 	{
 		if (field[nx][ny].fg=='+')// If the tile walked to is a door:
 		{
-			if (field[x][y].fg=='@'||field[x][y].fg=='M')// If the tile moving is a monster or the player:
+			if (field[x][y].fg=='@'||field[x][y].fg=='&')// If the tile moving is a monster or the player:
 				field[nx][ny].open();// Open the door.
 			return 1;// Report failure. (As in, do not move the player in the same turn as opening.
 		}
@@ -163,7 +163,7 @@ int Tile::move(int x,int y,char c)
 				return 1;// Report failure.
 			field[nx][ny].kill();// Otherwise, kill the animal.
 		}
-		if (field[nx][ny].fg=='M')// If the tile moved to is a monster:
+		if (field[nx][ny].fg=='&')// If the tile moved to is a monster:
 		{
 			if (field[x][y].fg=='A')// If the tile moving is an animal:
 			{
@@ -172,14 +172,14 @@ int Tile::move(int x,int y,char c)
 			}
 			if (field[x][y].fg=='@')// If the tile moving is the player:
 				field[nx][ny].kill();// Kill the monster.
-			if (field[x][y].fg=='M')// If the tile moving is a monster:
+			if (field[x][y].fg=='&')// If the tile moving is a monster:
 				return 1;// Report failure.
 		}
 		if (field[nx][ny].fg=='@')// If the tile moved to is the player:
 		{
 			if (field[x][y].fg=='A')// If the tile moving is an animal:
 				return 1;// Report failure.
-			if (field[x][y].fg=='M')// If the tile moving is a monster:
+			if (field[x][y].fg=='&')// If the tile moving is a monster:
 			{
 				field[nx][ny].kill();// Kill the player.
 				dead=true;// Let the records show that the forces of good are vanquished.

@@ -11,7 +11,7 @@ static char input[64];
 static char ic;
 static bool quit=false;
 static Display d;
-int main()
+int main(int argc,char *argv[])
 {
 	srand(time(0));// Seed the random number generator.
 	int ix,iy,iw,ih,in,r;// Create local variables.
@@ -25,15 +25,20 @@ int main()
 	cout<<"Y (int) : ";cin>>iy;
 	d.placeplayer(ix,iy);
 	*/
-	dead=false;
+	dead=false;// The player is (obviously) not dead by default.
 	d.placeplayer(rand()%63,rand()%31);// Place the player randomly on the field.
-	cout<<"--House parameters--"<<endl;// Prompt for input.
-	cout<<"# (int) : ";cin>>in;// Get input for number of houses.
+	if (argc>1)// If there are any arguments:
+		sscanf(argv[1],"%d",&in);// The first argument should be the number of houses spawned.
+	else// Otherwise:
+	{
+		cout<<"--House parameters--"<<endl;// Prompt for input.
+		cout<<"# (int) : ";cin>>in;// Get input for number of houses.
+	}
 	for (int i=0;i<in;i++)// For every time that a house is supposed to be spawned:
 	{
 		ix=1+rand()%+62;iy=1+rand()%30;// Generate random coordinates.
 		iw=3+rand()%16;ih=3+rand()%8;// Generate random dimensions.
-		switch (rand()%4)// Choose randomly between 4 cases:
+		switch (rand()%4)// Choose randomly between four cases:
 		{
 			case 0:id[0]='h';break;// left,
 			case 1:id[0]='j';break;// down,
@@ -57,15 +62,25 @@ int main()
 		cin>>id;
 	} while (id[0]=='y');
 	*/
-	cout<<"--Animal parameters--"<<endl;// Prompt for input.
-	cout<<"# (int) : ";cin>>in;// Get input for number of animals.
+	if (argc>2)// If there is more than one argument:
+		sscanf(argv[2],"%d",&in);// The second argument should be the number of animals spawned.
+	else// Otherwise:
+	{
+		cout<<"--Animal parameters--"<<endl;// Prompt for input.
+		cout<<"# (int) : ";cin>>in;// Get input for number of animals.
+	}
 	for (int i=0;i<in;i++)// For every time that an animal is to be created:
 	{
 		if (field[rand()%64][rand()%32].animal()==1)// Create the animal at a random location. If unsuccessful...
 			i--;// ...try again.
 	}
-	cout<<"--Monster parameters--"<<endl;// Prompt for input.
-	cout<<"# (int) : ";cin>>in;// Get input for number of monsters.
+	if (argc>3)// If there are more than two arguments:
+		sscanf(argv[3],"%d",&in);// The third argument should be the number of monsters spawned.
+	else// Otherwise:
+	{
+		cout<<"--Monster parameters--"<<endl;// Prompt for input.
+		cout<<"# (int) : ";cin>>in;// Get input for number of monsters.
+	}
 	for (int i=0;i<in;i++)// For every time that a monster is to be created:
 	{
 		if (field[rand()%64][rand()%32].monster()==1)// Create the monster at a random location. If unsuccessful...
@@ -80,7 +95,7 @@ int main()
 	{
 		for (int ix=0;ix<64;ix++)// For every column...
 			for (int iy=0;iy<32;iy++)// ...for every row...
-				if (field[ix][iy].fg=='M')// ...if the tile is a monster:
+				if (field[ix][iy].fg=='&')// ...if the tile is a monster:
 					mc++;// Increase the monster count meter.
 				else if (field[ix][iy].fg=='A')// If the tile is an animal:
 					ac++;// Increase the animal count meter.
@@ -91,7 +106,7 @@ int main()
 		d.draw();// Recursively draw every tile.
 		for (int x=0;x<64;x++)// For every column:
 			for (int y=0;y<32;y++)// For every row::
-				if (field[x][y].fg=='A'||field[x][y].fg=='M')// If the tile is a monster or animal:
+				if (field[x][y].fg=='A'||field[x][y].fg=='&')// If the tile is a monster or animal:
 					field[x][y].m=true;// Allow it to move randomly.
 				else// Otherwise:
 					field[x][y].m=false;// Disallow random movement.
