@@ -8,9 +8,9 @@
 #include "tile.h"
 using namespace std;
 static char input[64];
-static char ic;
+static char ic0,ic1,ic2;
 static bool quit=false;
-static Display d;
+Display d;
 int main(int argc,char *argv[])
 {
 	srand(time(0));// Seed the random number generator.
@@ -110,11 +110,29 @@ int main(int argc,char *argv[])
 					field[x][y].m=true;// Allow it to move randomly.
 				else// Otherwise:
 					field[x][y].m=false;// Disallow random movement.
-		ic=getch();// Get unbuffered user input as char.
-		if (ic=='q')// If the input was a Q:
+		ic0=getch();// Get unbuffered user input as char.
+		if (ic0=='q')// If the input was a Q:
 			break; // Quit immediately.
+		else if (ic0=='m')// If the input was an M:
+		{
+			ic1=getch();// Get (second) unbuffered user input as char.
+			ic2=getch();// Get (third) unbuffered user input as char.
+			int nx=px+d.offset('x',ic2);// Make absolute x coordinate from player-relative x coordinate.
+			int ny=py+d.offset('y',ic2);// Make absolute y coordinate from player-relative y coordinate.
+			if (nx>-1&&nx<65&&ny>-1&&ny<33)// If the coordinates are within bounds:
+			{
+				if (ic1=='g')// If the second character is a g:
+					field[nx][ny].grass();// Try to make the selected tile grass.
+				if (ic1=='f')// If the second character is an f:
+					field[nx][ny].floor(nx,ny);// Try to make the selected tile a floor.
+				if (ic1=='w')// If the second character is a w:
+					field[nx][ny].wall(nx,ny);// Try to make the selected tile a wall.
+				if (ic1=='d')// If the second character is a d:
+					field[nx][ny].door();// Try to make the selected tile a door.
+			}
+		}
 		else if (!dead)// Otherwise, if the player is not dead:
-			field[px][py].move(px,py,ic);// Try to move the player in that direction.
+			field[px][py].move(px,py,ic0);// Try to move the player in that direction.
 		for (int x=0;x<64;x++)// For every tile...
 			for (int y=0;y<32;y++)// ...
 				field[x][y].rmove(x,y);// ...try to move each randomly.

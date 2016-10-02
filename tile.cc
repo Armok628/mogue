@@ -1,6 +1,7 @@
 #include <cstdlib>
-#include "tile.h"
 #include "main.h"
+#include "tile.h"
+#include "display.h"
 static char _RESET_COLOR[]="\033[0m";
 static char _GREEN[]="\033[0;32m";
 static char _L_GREEN[]="\033[1;32m";
@@ -20,7 +21,8 @@ Tile::Tile()
 }
 void Tile::grass()
 {
-	fg=' ';// Grass should have no foreground.
+	if (fg=='\0'||fg=='%'||fg=='+')// If the tile is not initialized or is already a wall or door:
+		fg=' ';// Grass should have a blank foreground.
 	switch(rand()%2)// Pick randomly between two choices:
 	{
 		case 0:bc=_GREEN;break;// light green,
@@ -53,19 +55,19 @@ void Tile::rmove(int x,int y)
 }
 void Tile::wall(int x,int y)
 {
-	if (fg!='@')// If this tile is not the player:
+	if (fg!='@'&&fg!='A'&&fg!='&')// If this tile is not the player, an animal, or a monster:
 	{
 		bg=fg='%';// Set the background and foreground to the percent sign.
 		if (x%2!=y%2)// In a checkerboard pattern, alternate between...
 			bc=fc=_RED;// ...red...
 		else bc=fc=_L_RED;// ...and light red.
 	}
-	else floor(x,y);// If it is the player, just set this tile to a floor.
+	else floor(x,y);// If it is, just set this tile to a floor.
 }
 void Tile::floor(int x,int y)
 {
 	bg='#';// Set the background to a floor.
-	if (fg!='@')// If the foreground is not a person:
+	if (fg!='@'&&fg!='A'&&fg!='&')// If the foreground is not a person, animal, or monster:
 	{
 		fg=' ';// Clear the foreground character
 		fc=_RESET_COLOR;// Clear the foreground color
@@ -76,10 +78,13 @@ void Tile::floor(int x,int y)
 }
 void Tile::door()
 {
-	if (fg!='@')// If the tile does not have a player on it:
+	if (fg!='@'&&fg!='A'&&fg!='&')// If the foreground is not a person, animal, or monster:
+	{
 		fg='+';// Set the foreground to a plus to represent a door.
+		fc=_BROWN;// Set the foreground to brown.
+	}
 	bg='-';// The background of a door is pre-set to a minus symbol to reduce operations needed for opening.
-	fc=bc=_BROWN;// Doors will always be brown.
+	bc=_BROWN;// Doors will always be brown.
 }
 void Tile::open()
 {
@@ -131,20 +136,8 @@ int Tile::move(int x,int y,char c)
 {
 	if (field[x][y].fg==' ')// If the tile supposed to be moved is empty:
 		return 1;// Report failure.
-	int offset[2];offset[0]=0;offset[1]=0;// Initialize the offset coordinates.
-	switch (c)// Act based on parameter c.
-	{
-		case 'h':offset[0]=-1;break;// If West, set X offset to negative one.
-		case 'j':offset[1]=1;break;// If South, set Y offset to one.
-		case 'k':offset[1]=-1;break;// If North, set Y offset to negative one.
-		case 'l':offset[0]=1;break;// If East, set X offset to one.
-		case 'y':offset[0]=-1;offset[1]=-1;break;// If Northwest, set both X and Y offsets to negative one.
-		case 'u':offset[0]=1;offset[1]=-1;break;// If Northeast, set X offset to one, Y offset to negative one.
-		case 'b':offset[0]=-1;offset[1]=1;break;// If Southwest, set X offset to negative one, Y offset to one.
-		case 'n':offset[0]=1;offset[1]=1;break;// If Southeast, set both X and Y offsets to one.
-		default :return 1;// If no relevant key was pressed, report failure.
-	}
-	int nx=x+offset[0];int ny=y+offset[1];// Set new X and new Y variables.
+	int o[2];o[0]=d.offset('x',c);o[1]=d.offset('y',c);// Create offset coordinate array and set values.
+	int nx=x+o[0];int ny=y+o[1];// Set new X and new Y variables.
 	if (!((c=='h'||c=='y'||c=='b')&&x==0// If the player is not moving West at X equals zero...
 			||(c=='j'||c=='b'||c=='n')&&y==31// ...nor South at Y equals thirty-one...
 			||(c=='k'||c=='y'||c=='u')&&y==0// ...nor North at Y equals zero...
@@ -195,6 +188,7 @@ int Tile::move(int x,int y,char c)
 }
 void Tile::kill()
 {
+	bg=fg;// Set the background to whatever creature was there.
 	bc=_RED;// Set the background to a blood color.
 	m=false;// Disallow random movement.
 	fg=' ';// Remove the foreground character.

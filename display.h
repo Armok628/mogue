@@ -9,5 +9,6 @@ class Display
 		void makedoors();
 		int house(int x,int y,int w,int h,char d);
 		int dungeon(int x,int y,int w,int h,char d);
+		int offset(char a,char c);
 };
 #endif

@@ -99,3 +99,25 @@ void Display::makedoors()
 					field[x1][y1].door();// Place a door on the tile.
 			}
 }
+int Display::offset(char a,char c)
+{
+	int offset[2];offset[0]=0;offset[1]=0;// Initialize the offset coordinates.
+	switch (c)// Act based on parameter c.
+		{
+			case '.':break;// If the input character is a period, let there be no offset.
+			case 'h':offset[0]=-1;break;// If West, set X offset to negative one.
+	 		case 'j':offset[1]=1;break;// If South, set Y offset to one.
+			case 'k':offset[1]=-1;break;// If North, set Y offset to negative one.
+			case 'l':offset[0]=1;break;// If East, set X offset to one.
+			case 'y':offset[0]=-1;offset[1]=-1;break;// If Northwest, set both X and Y offsets to negative one.
+	 		case 'u':offset[0]=1;offset[1]=-1;break;// If Northeast, set X offset to one, Y offset to negative one.
+			case 'b':offset[0]=-1;offset[1]=1;break;// If Southwest, set X offset to negative one, Y offset to one.
+			case 'n':offset[0]=1;offset[1]=1;break;// If Southeast, set both X and Y offsets to one.
+	 		default :return 0;// If no relevant key was pressed, return zero.
+		}
+	if (a=='x')// If the offset requested was x:
+		return offset[0];// Return the x offset.
+	else if (a=='y')// Otherwise, if the offset requested was y:
+		return offset[1];// Return the y offset.
+	else return 0;// Otherwise, return zero.
+}
