@@ -77,7 +77,8 @@ void Tile::floor(int x,int y)
 }
 void Tile::door()
 {
-	fg='+';// The foreground of a door is a plus.
+	if (fg!='@')// If the tile does not have a player on it:
+		fg='+';// Set the foreground to a plus to represent a door.
 	bg='-';// The background of a door is pre-set to a minus symbol to reduce operations needed for opening.
 	fc=bc=_BROWN;// Doors will always be brown.
 }
