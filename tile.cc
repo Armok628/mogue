@@ -35,22 +35,21 @@ void Tile::grass()
 		case 4:bg='`';break;// grave (?).
 	}
 }
-void Tile::rmove(int x,int y,int c)
+void Tile::rmove(int x,int y)
 {
-	for (int i=0;i<c;i++)// For every time that the tile is supposed to move randomly:
-		if (m==true)// If the tile is supposed to move:
-			switch (rand()%9)// Pick randomly between nine choices:
-			{
-				case 0:break;// not moving at all,
-				case 1:move(x,y,'h');break;// moving West,
-				case 2:move(x,y,'j');break;// moving South,
-				case 3:move(x,y,'k');break;// moving North,
-				case 4:move(x,y,'l');break;// moving East,
-				case 5:move(x,y,'y');break;// moving Northwest,
-				case 6:move(x,y,'u');break;// moving Northeast,
-				case 7:move(x,y,'b');break;// moving Southwest,
-				case 8:move(x,y,'n');break;// moving Southeast.
-			}
+	if (m==true)// If the tile is supposed to move:
+		switch (rand()%9)// Pick randomly between nine choices:
+		{
+			case 0:break;// not moving at all,
+			case 1:move(x,y,'h');break;// moving West,
+			case 2:move(x,y,'j');break;// moving South,
+			case 3:move(x,y,'k');break;// moving North,
+			case 4:move(x,y,'l');break;// moving East,
+			case 5:move(x,y,'y');break;// moving Northwest,
+			case 6:move(x,y,'u');break;// moving Northeast,
+			case 7:move(x,y,'b');break;// moving Southwest,
+			case 8:move(x,y,'n');break;// moving Southeast.
+		}
 }
 void Tile::wall(int x,int y)
 {

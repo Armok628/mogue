@@ -117,7 +117,7 @@ int main(int argc,char *argv[])
 			field[px][py].move(px,py,ic);// Try to move the player in that direction.
 		for (int x=0;x<64;x++)// For every tile...
 			for (int y=0;y<32;y++)// ...
-				field[x][y].rmove(x,y,1);// ...try to move each randomly.
+				field[x][y].rmove(x,y);// ...try to move each randomly.
 	}
 	while (true);// (...while the loop is not broken.)
 	endwin();// When it is told to quit, end ncurses output.
