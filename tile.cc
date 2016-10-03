@@ -136,8 +136,9 @@ int Tile::move(int x,int y,char c)
 {
 	if (field[x][y].fg==' ')// If the tile supposed to be moved is empty:
 		return 1;// Report failure.
-	int o[2];o[0]=d.offset('x',c);o[1]=d.offset('y',c);// Create offset coordinate array and set values.
-	int nx=x+o[0];int ny=y+o[1];// Set new X and new Y variables.
+	int nx=x+d.offset('x',c);int ny=y+d.offset('y',c);// Create and set new X and new Y variables.
+	if (nx==x&&ny==y)// If the tile moving would move to its same space:
+		return 1;// Report failure.
 	if (!((c=='h'||c=='y'||c=='b')&&x==0// If the player is not moving West at X equals zero...
 			||(c=='j'||c=='b'||c=='n')&&y==31// ...nor South at Y equals thirty-one...
 			||(c=='k'||c=='y'||c=='u')&&y==0// ...nor North at Y equals zero...
