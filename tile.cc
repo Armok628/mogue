@@ -89,10 +89,15 @@ void Tile::open()
 {
 	fg=' ';// Remove the foreground to 'open' the door. The background is already set, so nothing else needs to be done.
 }
-void Tile::wand()
+int Tile::wand()
 {
-	fg='/';
-	fc=_PURPLE;
+	if (fg==' ')// If the foreground is clear:
+	{
+		fg='/';// Set the foreground to a forward slash
+		fc=_PURPLE;// Set the foreground color to purple.
+		return 0;// Report success.
+	}
+	return 1;// Otherwise report failure.
 }
 int Tile::animal()
 {

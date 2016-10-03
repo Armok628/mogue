@@ -26,7 +26,7 @@ int main(int argc,char *argv[])
 	d.placeplayer(ix,iy);
 	*/
 	dead=false;// The player is (obviously) not dead by default.
-	d.placeplayer(rand()%63,rand()%31);// Place the player randomly on the field.
+	d.placeplayer(rand()%64,rand()%32);// Place the player randomly on the field.
 	if (argc>1)// If there are any arguments:
 		sscanf(argv[1],"%d",&in);// The first argument should be the number of houses spawned.
 	else// Otherwise:
@@ -46,7 +46,7 @@ int main(int argc,char *argv[])
 			case 3:id[0]='l';break;// right.
 		}
 		if (ix+iw<=63&&iy+ih<=31)// If the dimensions and coordinates do not go to/past the edge...
-			r=d.house(ix,iy,iw,ih,id[0]);// ...spawn the house...
+			d.house(ix,iy,iw,ih,id[0]);// ...spawn the house...
 		else i--;// ...otherwise try again.
 	}
 	/*// DEPRECATED: Manual house placement
@@ -92,7 +92,7 @@ int main(int argc,char *argv[])
 	d.makedoors();// Recursively create doors on suitable floors.
 	int mc,ac;// Create new local variables to count creatures.
 	mc=ac=0; // Initialize local counting variables.
-	field[rand()%63][rand()%31].wand();// Place a wand randomly on the field.
+	do {} while (field[rand()%64][rand()%32].wand()==1);// Keep trying to place a wand randomly on the field until success.
 	haswand=false;// Initialize external wand ownership boolean.
 	initscr();// Begin ncurses screen output.
 	do// At least once, but repeatedly:
