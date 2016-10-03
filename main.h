@@ -4,6 +4,6 @@
 #include "display.h"
 extern Tile field[64][32];
 extern int px,py;
-extern bool dead;
+extern bool dead,haswand;
 extern Display d;
 #endif

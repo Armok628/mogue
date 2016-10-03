@@ -71,7 +71,8 @@ int main(int argc,char *argv[])
 	}
 	for (int i=0;i<in;i++)// For every time that an animal is to be created:
 	{
-		if (field[rand()%64][rand()%32].animal()==1)// Create the animal at a random location. If unsuccessful...
+		ix=rand()%64;iy=rand()%32;// Generate random coordinates.
+		if (field[ix][iy].bg=='#'||field[ix][iy].animal()==1)// Create the animal at a random location. If unsuccessful:
 			i--;// ...try again.
 	}
 	if (argc>3)// If there are more than two arguments:
@@ -83,13 +84,16 @@ int main(int argc,char *argv[])
 	}
 	for (int i=0;i<in;i++)// For every time that a monster is to be created:
 	{
-		if (field[rand()%64][rand()%32].monster()==1)// Create the monster at a random location. If unsuccessful...
-			i--;// ...try again.
+		ix=rand()%64;iy=rand()%32;// Generate random coordinates.
+		if (field[ix][iy].bg!='#'||field[ix][iy].monster()==1)// Create the monster at those coordinates. If unsuccessful:
+			i--;// ...try again
 	}
 	d.cullwalls();// Recursively destroy walls flanked by floors.
 	d.makedoors();// Recursively create doors on suitable floors.
 	int mc,ac;// Create new local variables to count creatures.
 	mc=ac=0; // Initialize local counting variables.
+	field[rand()%63][rand()%31].wand();// Place a wand randomly on the field.
+	haswand=false;// Initialize external wand ownership boolean.
 	initscr();// Begin ncurses screen output.
 	do// At least once, but repeatedly:
 	{
@@ -129,6 +133,10 @@ int main(int argc,char *argv[])
 					field[nx][ny].wall(nx,ny);// Try to make the selected tile a wall.
 				if (ic1=='d')// If the second character is a d:
 					field[nx][ny].door();// Try to make the selected tile a door.
+				if (ic1=='&'&&haswand)// If the second character is & and the wand has been obtained:
+					field[nx][ny].monster();// Try to make the selected tile a monster.
+				if (ic1=='A'&&haswand)// If the second character is A and the wand has been obtained:
+					field[nx][ny].animal();// Try to make the selected tile an animal.
 			}
 		}
 		else if (!dead)// Otherwise, if the player is not dead:

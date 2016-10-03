@@ -9,6 +9,7 @@ class Tile
 		void floor(int x,int y);
 		void door();
 		void open();
+		void wand();
 		int animal();
 		int monster();
 		void set(char c);

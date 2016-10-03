@@ -13,8 +13,7 @@ static char _YELLOW[]="\033[1;33m";
 static char _RED[]="\033[0;31m";
 static char _L_RED[]="\033[1;31m";
 static char _PURPLE[]="\033[0;35m";
-bool dead;
-bool m;
+bool m,dead,haswand;
 Tile::Tile()
 {
 	grass();// By default, each tile should be grass.
@@ -88,11 +87,16 @@ void Tile::door()
 }
 void Tile::open()
 {
-	fg=' ';// Remove the foreground to allow ingress. The background is already set, so nothing else needs to be done.
+	fg=' ';// Remove the foreground to 'open' the door. The background is already set, so nothing else needs to be done.
+}
+void Tile::wand()
+{
+	fg='/';
+	fc=_PURPLE;
 }
 int Tile::animal()
 {
-	if (fg!='%'&&bg!='#'&&fg!='@'&&fg!='A'&&fg!='&')// If this tile is not a wall, floor, animal, or player:
+	if (fg==' ')// If the tile is clear:
 	{
 		fg='A';// This tile's foreground should be D (for deer).
 		fc=_BROWN;// Animals should be displayed as brown.
@@ -102,10 +106,10 @@ int Tile::animal()
 }
 int Tile::monster()
 {
-	if (bg=='#'&&fg==' ')// If the tile is a clear floor:
+	if (fg==' ')// If the tile is clear:
 	{
 		fg='&';// Set the foreground to M for monster.
-		fc=_D_GRAY;// Set the monster's color to purple.
+		fc=_D_GRAY;// Set the monster's color to dark gray.
 		return 0;// Report success.
 	}
 	return 1;// Otherwise, report failure.
@@ -178,6 +182,16 @@ int Tile::move(int x,int y,char c)
 				field[nx][ny].kill();// Kill the player.
 				dead=true;// Let the records show that the forces of good are vanquished.
 			}
+		}
+		if (field[nx][ny].fg=='/')// If the tile moved to is the wand:
+		{
+			if (field[x][y].fg=='@')// If the tile moving is the player:
+			{
+				haswand=true;// Set the wand ownership variable to true.
+				field[x][y].fc=_PURPLE;// Set the player's color to purple.
+			}
+			else
+				return 1;// Report failure.
 		}
 		field[nx][ny].fg=field[x][y].fg;// Set the new tile's foreground...
 		field[nx][ny].fc=field[x][y].fc;// ...and set the new tile's color.
