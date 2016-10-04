@@ -117,7 +117,7 @@ int main(int argc,char *argv[])
 		ic0=getch();// Get unbuffered user input as char.
 		if (ic0=='q')// If the input was a Q:
 			break; // Quit immediately.
-		else if (ic0=='m')// If the input was an M:
+		else if (ic0=='m'&&!dead)// If the input was an M and the player is not dead:
 		{
 			ic1=getch();// Get (second) unbuffered user input as char.
 			ic2=getch();// Get (third) unbuffered user input as char.
