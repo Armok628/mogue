@@ -88,8 +88,8 @@ int main(int argc,char *argv[])
 		if (field[ix][iy].bg!='#'||field[ix][iy].monster()==1)// Create the monster at those coordinates. If unsuccessful:
 			i--;// ...try again
 	}
-	d.cullwalls();// Recursively destroy walls flanked by floors.
-	d.makedoors();// Recursively create doors on suitable floors.
+	d.cullwalls();// Iteratively destroy walls flanked by floors.
+	d.makedoors();// Iteratively create doors on suitable floors.
 	int mc,ac;// Create new local variables to count creatures.
 	mc=ac=0; // Initialize local counting variables.
 	do {} while (field[rand()%64][rand()%32].wand()==1);// Keep trying to place a wand randomly on the field until success.
@@ -107,7 +107,7 @@ int main(int argc,char *argv[])
 		refresh();// Refresh the screen to make changes.
 		cout<<"Monsters left: "<<mc<<endl<<'\r';mc=0;// Print the number of monsters left and reset the counter.
 		cout<<"Animals left: "<<ac<<'\r';ac=0;// Print the number of animals left and reset the counter.
-		d.draw();// Recursively draw every tile.
+		d.draw();// Iteratively draw every tile.
 		for (int x=0;x<64;x++)// For every column:
 			for (int y=0;y<32;y++)// For every row::
 				if (field[x][y].fg=='A'||field[x][y].fg=='&')// If the tile is a monster or animal:
@@ -139,6 +139,8 @@ int main(int argc,char *argv[])
 					field[nx][ny].animal();// Try to make the selected tile an animal.
 			}
 		}
+		else if (ic0=='~')// Otherwise, if the debug key was pressed:
+			d.makepaths();// Test makepaths()
 		else if (!dead)// Otherwise, if the player is not dead:
 			field[px][py].move(px,py,ic0);// Try to move the player in that direction.
 		for (int x=0;x<64;x++)// For every tile...

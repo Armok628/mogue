@@ -23,7 +23,7 @@ void Display::placeplayer(int x,int y)
 	field[x][y].set('@');// Set the target tile's foreground to the player character (pun unintended)
 	field[x][y].setc(_L_BLUE);// Set the player's color to light blue.
 	field[x][y].m=false;// Do not allow the player to move randomly.
-	px=x;py=y;// Set the player coordinate index.
+	px=x;py=y;// Set the player coordinate step.
 }
 int Display::house(int x,int y,int w,int h,char d)
 {
@@ -120,4 +120,110 @@ int Display::offset(char a,char c)
 	else if (a=='y')// Otherwise, if the offset requested was y:
 		return offset[1];// Return the y offset.
 	else return 0;// Otherwise, return zero.
+}
+void Display::floorline(int x1,int y1,int x2,int y2,bool inc)
+{
+	if (inc)// If the line should be drawn in increasing order:
+		for (int iy=y1;iy<=y2;iy++)// For every Y within the coordinates:
+			for (int ix=x1;ix<=x2;ix++)// For every X within the given coordinates:
+				field[ix][iy].floor(ix,iy);// Make the tile a floor.
+	if (!inc)// If the line should be drawn in decreasing order:
+		for (int iy=y1;iy>=y2;iy--)// For every Y within the coordinates:
+			for (int ix=x1;ix>=x2;ix--)// For every X within the given coordinates:
+				field[ix][iy].floor(ix,iy);// Make the tile a floor.
+
+}
+void Display::makepaths()
+{
+	int tmp[2],step;// Initialize local integers for record-keeping.
+	for (int y=1;y<31;y++)// For every row:
+	{
+		step=0;// Reset the step counter for this row.
+		for (int x=1;x<63;x++)// For every tile in this row, left to right:
+		{
+			// Step zero: Detect where a path should begin.
+			if (step==0&&field[x][y].fg=='+'&&field[x+1][y].bg!='#')// If the tile is a door not followed by floor:
+			{
+				tmp[step]=x;// Remember its X coordinate for later.
+				step++;// Now for step one.
+			}
+			// Step one: Detect where the path should end.
+			if (step==1&&field[x][y].fg=='%')// If the tile is a door or wall:
+			{
+				tmp[step]=x;// Remember its X coordinate for later.
+				step++;// Now for step two.
+			}
+			if (step==2)// Step two: Make the path.
+			{
+				floorline(tmp[0]+1,y,tmp[1]-1,y,true);// Draw the floor line between the two marked positions.
+				step=0;// Reset the step in case there is another path to be drawn in this direction.
+			}
+		}
+		step=0;// Reset the step counter again in case the process was left incomplete.
+		for (int x=62;x>0;x--)// For every tile in this row, right to left:
+		{
+			// Step zero: Detect where a path should begin.
+			if (step==0&&field[x][y].fg=='+'&&field[x-1][y].bg!='#')// If the tile is a door not followed by floor:
+			{
+				tmp[step]=x;// Remember its X coordinate for later.
+				step++;// Now for step one.
+			}
+			// Step one: Detect where the path should end.
+			if (step==1&&field[x][y].fg=='%')// If the tile is a door or wall:
+			{
+				tmp[step]=x;// Remember its X coordinate for later.
+				step++;// Now for step two.
+			}
+			if (step==2)// Step two: Make the path.
+			{
+				floorline(tmp[0]-1,y,tmp[1]+1,y,false);// Draw the floor line between the two marked positions.
+				step=0;// Reset the step in case there is another path to be drawn in this direction.
+			}
+		}
+	}
+	for (int x=1;x<63;x++)// For every column:
+	{
+		step=0;// Reset the step counter for this column.
+		for (int y=1;y<31;y++)// For every tile in this column, left to right:
+		{
+			// Step zero: Detect where a path should begin.
+			if (step==0&&field[x][y].fg=='+'&&field[x][y+1].bg!='#')// If the tile is a door not followed by floor:
+			{
+				tmp[step]=y;// Remember its Y coordinate for later.
+				step++;// Now for step one.
+			}
+			// Step one: Detect where the path should end.
+			if (step==1&&field[x][y].fg=='%')// If the tile is a door or wall:
+			{
+				tmp[step]=y;// Remember its Y coordinate for later.
+				step++;// Now for step two.
+			}
+			if (step==2)// Step two: Make the path.
+			{
+				floorline(x,tmp[0]+1,x,tmp[1]-1,true);// Draw the floor line between the two marked positions.
+				step=0;// Reset the step in case there is another path to be drawn in this direction.
+			}
+		}
+		step=0;// Reset the step counter again in case the process was left incomplete.
+		for (int y=30;y>0;y--)// For every tile in this column, right to left:
+		{
+			// Step zero: Detect where a path should begin.
+			if (step==0&&field[x][y].fg=='+'&&field[x][y-1].bg!='#')// If the tile is a door not followed by floor:
+			{
+				tmp[step]=y;// Remember its Y coordinate for later.
+				step++;// Now for step one.
+			}
+			// Step one: Detect where the path should end.
+			if (step==1&&field[x][y].fg=='%')// If the tile is a door or wall:
+			{
+				tmp[step]=y;// Remember its Y coordinate for later.
+				step++;// Now for step two.
+			}
+			if (step==2)// Step two: Make the path.
+			{
+				floorline(x,tmp[0]-1,x,tmp[1]+1,false);// Draw the floor line between the two marked positions.
+				step=0;// Reset the step in case there is another path to be drawn in this direction.
+			}
+		}
+	}
 }
