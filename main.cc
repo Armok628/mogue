@@ -92,58 +92,79 @@ int main(int argc,char *argv[])
 	d.makedoors();// Iteratively create doors on suitable floors.
 	int mc,ac;// Create new local variables to count creatures.
 	mc=ac=0; // Initialize local counting variables.
-	do {} while (field[rand()%64][rand()%32].wand()==1);// Keep trying to place a wand randomly on the field until success.
-	haswand=false;// Initialize external wand ownership boolean.
-	initscr();// Begin ncurses screen output.
-	do// At least once, but repeatedly:
+	while (field[rand()%64][rand()%32].wand()==1){}// Keep trying to place a wand randomly on the field until success.
+	while (field[rand()%64][rand()%32].bow()==1){}// keep trying to place a bow randomly on the field until success.
+	haswand=false;// initialize external wand ownership boolean.
+	initscr();// begin ncurses screen output.
+	do// at least once, but repeatedly:
 	{
-		for (int ix=0;ix<64;ix++)// For every column...
+		for (int ix=0;ix<64;ix++)// for every column...
 			for (int iy=0;iy<32;iy++)// ...for every row...
 				if (field[ix][iy].fg=='&')// ...if the tile is a monster:
-					mc++;// Increase the monster count meter.
-				else if (field[ix][iy].fg=='A')// If the tile is an animal:
-					ac++;// Increase the animal count meter.
-		clear();// Clear the whole screen.
-		refresh();// Refresh the screen to make changes.
-		cout<<"Monsters left: "<<mc<<endl<<'\r';mc=0;// Print the number of monsters left and reset the counter.
-		cout<<"Animals left: "<<ac<<'\r';ac=0;// Print the number of animals left and reset the counter.
-		d.draw();// Iteratively draw every tile.
-		for (int x=0;x<64;x++)// For every column:
-			for (int y=0;y<32;y++)// For every row::
-				if (field[x][y].fg=='A'||field[x][y].fg=='&')// If the tile is a monster or animal:
-					field[x][y].m=true;// Allow it to move randomly.
-				else// Otherwise:
-					field[x][y].m=false;// Disallow random movement.
-		ic0=getch();// Get unbuffered user input as char.
-		if (ic0=='q')// If the input was a Q:
-			break; // Quit immediately.
-		else if (ic0=='m'&&!dead)// If the input was an M and the player is not dead:
+					mc++;// increase the monster count meter.
+				else if (field[ix][iy].fg=='A')// if the tile is an animal:
+					ac++;// increase the animal count meter.
+		clear();// clear the whole screen.
+		refresh();// refresh the screen to make changes.
+		cout<<"Monsters left: "<<mc<<endl<<'\r';mc=0;// print the number of monsters left and reset the counter.
+		cout<<"Animals left: "<<ac<<'\r';ac=0;// print the number of animals left and reset the counter.
+		d.draw();// iteratively draw every tile.
+		for (int x=0;x<64;x++)// for every column:
+			for (int y=0;y<32;y++)// for every row::
+				if (field[x][y].fg=='A'||field[x][y].fg=='&'||field[x][y].fg=='V')// if the tile is an animal, monster, or soldier:
+					field[x][y].m=true;// allow it to move randomly.
+				else// otherwise:
+					field[x][y].m=false;// disallow random movement.
+		ic0=getch();// get unbuffered user input as char.
+		if (ic0=='q')// if the input was a q:
+			break; // quit immediately.
+		else if (ic0=='m'&&!dead)// if the input was an m and the player is not dead:
 		{
-			ic1=getch();// Get (second) unbuffered user input as char.
-			ic2=getch();// Get (third) unbuffered user input as char.
-			int nx=px+d.offset('x',ic2);// Make absolute x coordinate from player-relative x coordinate.
-			int ny=py+d.offset('y',ic2);// Make absolute y coordinate from player-relative y coordinate.
-			if (nx>-1&&nx<65&&ny>-1&&ny<33)// If the coordinates are within bounds:
+			ic1=getch();// get (second) unbuffered user input as char.
+			ic2=getch();// get (third) unbuffered user input as char.
+			int nx=px+d.offset('x',ic2);// make absolute x coordinate from player-relative x coordinate.
+			int ny=py+d.offset('y',ic2);// make absolute y coordinate from player-relative y coordinate.
+			if (nx>-1&&nx<65&&ny>-1&&ny<33)// if the coordinates are within bounds:
 			{
-				if (ic1=='g')// If the second character is a g:
-					field[nx][ny].grass();// Try to make the selected tile grass.
-				if (ic1=='f')// If the second character is an f:
-					field[nx][ny].floor(nx,ny);// Try to make the selected tile a floor.
-				if (ic1=='w')// If the second character is a w:
-					field[nx][ny].wall(nx,ny);// Try to make the selected tile a wall.
-				if (ic1=='d')// If the second character is a d:
-					field[nx][ny].door();// Try to make the selected tile a door.
-				if (ic1=='&'&&haswand)// If the second character is & and the wand has been obtained:
-					field[nx][ny].monster();// Try to make the selected tile a monster.
-				if (ic1=='A'&&haswand)// If the second character is A and the wand has been obtained:
-					field[nx][ny].animal();// Try to make the selected tile an animal.
+				if (ic1=='g')// if the second character is a g:
+					field[nx][ny].grass();// try to make the selected tile grass.
+				if (ic1=='f')// if the second character is an f:
+					field[nx][ny].floor(nx,ny);// try to make the selected tile a floor.
+				if (ic1=='w')// if the second character is a w:
+					field[nx][ny].wall(nx,ny);// try to make the selected tile a wall.
+				if (ic1=='d')// if the second character is a d:
+					field[nx][ny].door();// try to make the selected tile a door.
+				if (ic1=='&'&&haswand)// if the second character is & and the wand has been obtained:
+					field[nx][ny].monster();// try to make the selected tile a monster.
+				if (ic1=='A'&&haswand)// if the second character is a and the wand has been obtained:
+					field[nx][ny].animal();// try to make the selected tile an animal.
+				if (ic1=='V'&&haswand)// if the second character is v and the wand has been obtained:
+					field[nx][ny].soldier();// try tomake the selected tile a soldier.
 			}
 		}
-		else if (ic0=='~')// Otherwise, if the debug key was pressed:
-			d.makepaths();// Test makepaths()
-		else if (!dead)// Otherwise, if the player is not dead:
-			field[px][py].move(px,py,ic0);// Try to move the player in that direction.
-		for (int x=0;x<64;x++)// For every tile...
+		else if (ic0=='s'&&!dead&&hasbow)// If the input was an s and the player is not dead and has a bow:
+		{
+			ic1=getch();// get (second) unbuffered user input as char.
+			int o[2];// make an array to save offsets.
+			o[0]=d.offset('x',ic1);// save the x offset.
+			o[1]=d.offset('y',ic1);// save the y offset.
+			int ax=px;int ay=py;// Set the arrow's coordinates to begin with the player.
+			do// Repeatedly, but at least once:
+			{
+				ax+=o[0];ay+=o[1];// Modify the arrow's coordinates in the chosen direction.
+				if (field[ax][ay].fg!=' ')// If the arrow hits something:
+				{
+					if (field[ax][ay].fg!='%')// If the hit tile is not a wall
+						field[ax][ay].kill();// Kill whatever is on that tile.
+					break;// Stop the arrow.
+				}
+			} while (-1<ax<64&&-1<ay<32);// While the arrow is within bounds.
+		}
+		else if (ic0=='~')// otherwise, if the debug key was pressed:
+			d.makepaths();// test makepaths()
+		else if (!dead)// otherwise, if the player is not dead:
+			field[px][py].move(px,py,ic0);// try to move the player in that direction.
+		for (int x=0;x<64;x++)// for every tile...
 			for (int y=0;y<32;y++)// ...
 				field[x][y].rmove(x,y);// ...try to move each randomly.
 	}

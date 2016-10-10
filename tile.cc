@@ -13,7 +13,9 @@ static char _YELLOW[]="\033[1;33m";
 static char _RED[]="\033[0;31m";
 static char _L_RED[]="\033[1;31m";
 static char _PURPLE[]="\033[0;35m";
-bool m,dead,haswand;
+static char _L_BLUE[]="\033[1;34m";
+static char _BLUE[]="\033[0;34m";
+bool m,dead,haswand,hasbow;
 Tile::Tile()
 {
 	grass();// By default, each tile should be grass.
@@ -93,8 +95,18 @@ int Tile::wand()
 {
 	if (fg==' ')// If the foreground is clear:
 	{
-		fg='/';// Set the foreground to a forward slash
+		fg='/';// Set the foreground to a forward slash.
 		fc=_PURPLE;// Set the foreground color to purple.
+		return 0;// Report success.
+	}
+	return 1;// Otherwise report failure.
+}
+int Tile::bow()
+{
+	if (fg==' ')// If the foreground is clear:
+	{
+		fg=')';// Set the foreground to an equals sign.
+		fc=_BROWN;// Set the foreground color to brown.
 		return 0;// Report success.
 	}
 	return 1;// Otherwise report failure.
@@ -115,6 +127,16 @@ int Tile::monster()
 	{
 		fg='&';// Set the foreground to M for monster.
 		fc=_D_GRAY;// Set the monster's color to dark gray.
+		return 0;// Report success.
+	}
+	return 1;// Otherwise, report failure.
+}
+int Tile::soldier()
+{
+	if (fg==' ')// If the tile is clear:
+	{
+		fg='V';// Set the foreground to V for soldier as per Vincent's request :)
+		fc=_BLUE;// Set the monster's color to blue as per Vincent's request
 		return 0;// Report success.
 	}
 	return 1;// Otherwise, report failure.
@@ -156,13 +178,13 @@ int Tile::move(int x,int y,char c)
 	{
 		if (field[nx][ny].fg=='+')// If the tile walked to is a door:
 		{
-			if (field[x][y].fg=='@'||field[x][y].fg=='&')// If the tile moving is a monster or the player:
+			if (field[x][y].fg=='@'||field[x][y].fg=='&'||field[x][y].fg=='V')// If the tile moving is a monster, soldier, or the player:
 				field[nx][ny].open();// Open the door.
 			return 1;// Report failure. (As in, do not move the player in the same turn as opening.
 		}
 		if (field[nx][ny].fg=='A')// If the tile moved to is an animal:
 		{
-			if (field[x][y].fg=='A')// If the tile moving is also an animal:
+			if (field[x][y].fg=='A'||field[x][y].fg=='V')// If the tile moving is an animal or soldier:
 				return 1;// Report failure.
 			field[nx][ny].kill();// Otherwise, kill the animal.
 		}
@@ -173,20 +195,27 @@ int Tile::move(int x,int y,char c)
 				field[x][y].kill();// Kill the animal.
 				return 1;// Report failure (for the animal, anyway).
 			}
-			if (field[x][y].fg=='@')// If the tile moving is the player:
+			if (field[x][y].fg=='@'||field[x][y].fg=='V')// If the tile moving is the player or a soldier:
 				field[nx][ny].kill();// Kill the monster.
 			if (field[x][y].fg=='&')// If the tile moving is a monster:
 				return 1;// Report failure.
 		}
 		if (field[nx][ny].fg=='@')// If the tile moved to is the player:
 		{
-			if (field[x][y].fg=='A')// If the tile moving is an animal:
+			if (field[x][y].fg=='A'||field[x][y].fg=='V')// If the tile moving is an animal or soldier:
 				return 1;// Report failure.
 			if (field[x][y].fg=='&')// If the tile moving is a monster:
 			{
 				field[nx][ny].kill();// Kill the player.
 				dead=true;// Let the records show that the forces of good are vanquished.
 			}
+		}
+		if (field[nx][ny].fg=='V')// If the tile moved to is a soldier:
+		{
+			if (field[x][y].fg=='&')// If the tile moving is a monster:
+				field[nx][ny].kill();// Kill the soldier.
+			if (field[x][y].fg=='@'||field[x][y].fg=='A'||field[x][y].fg=='V')// If the tile moving is the player, an animal, or another soldier:
+				return 1;// Report failure.
 		}
 		if (field[nx][ny].fg=='/')// If the tile moved to is the wand:
 		{
@@ -195,8 +224,13 @@ int Tile::move(int x,int y,char c)
 				haswand=true;// Set the wand ownership variable to true.
 				field[x][y].fc=_PURPLE;// Set the player's color to purple.
 			}
-			else
-				return 1;// Report failure.
+			else return 1;// Otherwise, report failure.
+		}
+		if (field[nx][ny].fg==')')// If the tile moved to is a bow:
+		{
+			if (field[x][y].fg=='@')// If the tile moving is the player:
+				hasbow=true;// Set the bow ownership variable to true.
+			else return 1;// Otherwise report failure.
 		}
 		field[nx][ny].fg=field[x][y].fg;// Set the new tile's foreground...
 		field[nx][ny].fc=field[x][y].fc;// ...and set the new tile's color.

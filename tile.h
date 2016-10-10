@@ -10,8 +10,10 @@ class Tile
 		void door();
 		void open();
 		int wand();
+		int bow();
 		int animal();
 		int monster();
+		int soldier();
 		void set(char c);
 		void setc(char* c);
 		char ret();
