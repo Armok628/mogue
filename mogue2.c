@@ -3,14 +3,15 @@
 #include <time.h>
 #include <termios.h>
 #define NEW(x) malloc(sizeof(x))
-#define WIDTH 81
-#define HEIGHT 24
+#define BETW(x, min, max) (min<x&&x<max)
+#define WIDTH 80
+#define HEIGHT 23
 // Tile type definition
 typedef struct tile_t {
 	char fg,bg,*fg_c,*bg_c;
 } tile_t;
 // Function prototypes
-void clear();
+void clear_screen();
 void move_cursor(int x,int y);
 void reset_cursor();
 void draw_tile(tile_t tile);
@@ -19,23 +20,24 @@ void draw_board(tile_t field[HEIGHT][WIDTH]);
 int dir_offset(int axis,char dir);
 void move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH]);
 void update (tile_t field[HEIGHT][WIDTH]);
-// Color definitions (global)
+// Global definitions
 static char
     	*reset_color="\e[0;38;38m",
 	*blood_color="\e[0;31;38m",
     	*player_color="\e[1;34;38m",
     	*door_color="\e[0;33;38m",
 	*animal_color="\e[1;33;38m",
+	*monster_color="\e[0;37;38m",
     	*grass_colors[2]={"\e[0;32;38m","\e[1;32;38m"},
 	*floor_colors[2]={"\e[0;37;38m","\e[1;37;38m"},
 	*wall_colors[2]={"\e[0;31;38m","\e[1;31;38m"},
 	grass_chars[5]="\"\',.`",
 	dirs[9]="hjklyubn.";
+static FILE *debug_log;
 // Main function
 int main(int argc,char **argv)
 {
 	// Open the debug log
-	static FILE *debug_log;
 	debug_log=fopen("debug.log","w+");
 	// Seed the RNG
 	srand(time(NULL));
@@ -60,10 +62,10 @@ int main(int argc,char **argv)
 	field[player_y][player_x].fg='@';
 	field[player_y][player_x].fg_c=player_color;
 	// Initialize a test subject
-	field[10][10].fg='A';
-	field[10][10].fg_c=animal_color;
+	field[10][10].fg='&';
+	field[10][10].fg_c=monster_color;
 	// Draw board
-	clear();
+	clear_screen();
 	draw_board(field);
 	// Control loop
 	char input;
@@ -71,9 +73,12 @@ int main(int argc,char **argv)
 		input=fgetc(stdin);
 		if (input=='q')
 			break;
-		move_tile(player_y,player_x,input,field);
-		player_y+=dir_offset(0,input);
-		player_x+=dir_offset(1,input);
+		if (BETW(player_y+dir_offset(0,input),-1,HEIGHT)&&
+				BETW(player_x+dir_offset(1,input),-1,WIDTH)) {
+			move_tile(player_y,player_x,input,field);
+			player_y+=dir_offset(0,input);
+			player_x+=dir_offset(1,input);
+		}
 		update(field);
 	}
 	// Clean up terminal
@@ -83,13 +88,15 @@ int main(int argc,char **argv)
 	return 0;
 }
 // Function definitions
-void clear()
+void clear_screen()
 {
 	printf("\e[2J");
 }
-void move_cursor(int x,int y)
+void move_cursor(int y,int x)
 {
-	printf("\e[%d;%dH",x+1,y+1);
+	// To-do: Change the coordinate system to being [x][y]
+	// Let this function alone deal with the weird conventions
+	printf("\e[%d;%dH",y+1,x+1);
 }
 void reset_cursor()
 {
@@ -130,7 +137,7 @@ int dir_offset(int axis,char dir)
 			default:
 				return 0;
 		}
-	} else { // X-axis (0)
+	} else { // X-axis (1)
 		switch (dir) {
 			// Left
 			case 'h':
@@ -159,21 +166,21 @@ void move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH])
 	switch (from->fg) {
 		case '@': // Player
 			switch (to->fg) {
-				case '#': // Wall
+				case '%': // Wall
 				case '$': // Soldier
 					return;
 			}
 			break;
 		case '&': // Monster
 			switch (to->fg) {
-				case '#': // Wall
+				case '%': // Wall
 				case '&': // Monster
 					return;
 			}
 			break;
 		case '$': // Soldier
 			switch (to->fg) {
-				case '#': // Wall
+				case '%': // Wall
 				case '$': // Soldier
 				case '@': // Player
 				case 'A': // Animal
@@ -182,15 +189,16 @@ void move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH])
 			break;
 		case 'A': // Animal
 			switch (to->fg) {
-				case '#': // Wall
+				case '%': // Wall
 				case '@': // Player
 				case '$': // Soldier
 				case '&': // Monster
 					return;
 			}
 	}
-	// To-do: Handle edge cases (literally)
-	if (ydest!=ypos||xdest!=xpos) {
+	if ((BETW(ydest,-1,HEIGHT)&&BETW(xdest,-1,WIDTH))
+			&&(ydest!=ypos||xdest!=xpos)) {
+		fprintf(debug_log,"Moving %c to %d,%d\n",from->fg,ydest,xdest);
 		if (to->fg) {
 			to->bg=to->fg;
 			to->bg_c=blood_color;
@@ -206,9 +214,18 @@ void move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH])
 }
 void update (tile_t field[HEIGHT][WIDTH])
 {
+	// Make a matrix of the foreground characters
+	char fgcopies[HEIGHT][WIDTH];
 	for (int y=0;y<HEIGHT;y++)
 		for (int x=0;x<WIDTH;x++)
-			if (field[y][x].fg&&field[y][x].fg!='@')
+			fgcopies[y][x]=field[y][x].fg;
+	// For each occupied space, if it hasn't moved yet, move it
+	for (int y=0;y<HEIGHT;y++)
+		for (int x=0;x<WIDTH;x++)
+			if (fgcopies[y][x]&&fgcopies[y][x]==field[y][x].fg&&
+					// Exceptions
+					field[y][x].fg!='@'&&
+					field[y][x].fg!='%')
 				move_tile(y,x,dirs[rand()%9],field);
 }
 /*
