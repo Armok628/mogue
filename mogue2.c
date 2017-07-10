@@ -3,7 +3,8 @@
 #include <time.h>
 #include <termios.h>
 #define NEW(x) malloc(sizeof(x))
-#define BETW(x, min, max) (min<x&&x<max)
+#define BETW(x,min,max) (min<x&&x<max)
+#define CHECKER(x,y) ((x%2==0)^(y%2==0))
 #define WIDTH 80
 #define HEIGHT 23
 // Tile type definition
@@ -18,8 +19,11 @@ void draw_tile(tile_t tile);
 void draw_pos(int ypos,int xpos,tile_t field[HEIGHT][WIDTH]);
 void draw_board(tile_t field[HEIGHT][WIDTH]);
 int dir_offset(int axis,char dir);
-void move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH]);
+int move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH]);
 void update (tile_t field[HEIGHT][WIDTH]);
+void randomly_place(char fg,char *fg_c,tile_t field[HEIGHT][WIDTH]);
+void place_building(int ypos,int xpos,int h,int w,
+		tile_t field[HEIGHT][WIDTH]);
 // Global definitions
 static char
     	*reset_color="\e[0;38;38m",
@@ -62,8 +66,9 @@ int main(int argc,char **argv)
 	field[player_y][player_x].fg='@';
 	field[player_y][player_x].fg_c=player_color;
 	// Initialize a test subject
-	field[10][10].fg='&';
-	field[10][10].fg_c=monster_color;
+	randomly_place('&',monster_color,field);
+	// Create a test house
+	place_building(5,5,10,10,field);
 	// Draw board
 	clear_screen();
 	draw_board(field);
@@ -73,9 +78,8 @@ int main(int argc,char **argv)
 		input=fgetc(stdin);
 		if (input=='q')
 			break;
-		if (BETW(player_y+dir_offset(0,input),-1,HEIGHT)&&
-				BETW(player_x+dir_offset(1,input),-1,WIDTH)) {
-			move_tile(player_y,player_x,input,field);
+		if (move_tile(player_y,player_x,input,field))
+		{
 			player_y+=dir_offset(0,input);
 			player_x+=dir_offset(1,input);
 		}
@@ -153,29 +157,35 @@ int dir_offset(int axis,char dir)
 			default:
 				return 0;
 		}
-	}
+	}	
+	return 0;
 }
-void move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH])
+int move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH])
 {
 	/////////////// To-do: ABSTRACT PATTERNS
 	if (field[ypos][xpos].fg=='%')
-		return;
+		return 0;
 	int ydest=ypos+dir_offset(0,dir),xdest=xpos+dir_offset(1,dir);
+	if (0>ydest||ydest>HEIGHT-1||0>xdest||xdest>WIDTH-1)
+		return 0;
 	tile_t *from=&field[ypos][xpos],*to=&field[ydest][xdest];
 	// Note: Describes only cases where movement is disallowed
 	switch (from->fg) {
+		case '%': // Wall
+		case '+': // Door
+			return 0; // Always disallowed
 		case '@': // Player
 			switch (to->fg) {
 				case '%': // Wall
 				case '$': // Soldier
-					return;
+					return 0;
 			}
 			break;
 		case '&': // Monster
 			switch (to->fg) {
 				case '%': // Wall
 				case '&': // Monster
-					return;
+					return 0;
 			}
 			break;
 		case '$': // Soldier
@@ -184,7 +194,7 @@ void move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH])
 				case '$': // Soldier
 				case '@': // Player
 				case 'A': // Animal
-					return;
+					return 0;
 			}
 			break;
 		case 'A': // Animal
@@ -193,24 +203,40 @@ void move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH])
 				case '@': // Player
 				case '$': // Soldier
 				case '&': // Monster
-					return;
+					return 0;
 			}
 	}
-	if ((BETW(ydest,-1,HEIGHT)&&BETW(xdest,-1,WIDTH))
-			&&(ydest!=ypos||xdest!=xpos)) {
-		fprintf(debug_log,"Moving %c to %d,%d\n",from->fg,ydest,xdest);
+	// If the destination is not the source
+	if (ydest!=ypos||xdest!=xpos) {
+		// If the destination is a door
+		if (to->fg=='+') {
+			// Open it, not moving the creature
+			to->fg='\0';
+			to->fg_c=NULL;
+			draw_pos(ydest,xdest,field);
+			reset_cursor();
+			// Report failure to move
+			return 0;
+		}
+		// If there's something else at the destination
 		if (to->fg) {
+			// Kill it
 			to->bg=to->fg;
 			to->bg_c=blood_color;
 		}
+		// Move the symbol and color
 		to->fg=from->fg;
 		to->fg_c=from->fg_c;
 		from->fg='\0';
 		from->fg_c=NULL;
+		// Redraw the changed positions
 		draw_pos(ypos,xpos,field);
 		draw_pos(ydest,xdest,field);
 		reset_cursor();
-	}
+		// Report success
+		return 1;
+	} else
+		return 0;
 }
 void update (tile_t field[HEIGHT][WIDTH])
 {
@@ -223,25 +249,59 @@ void update (tile_t field[HEIGHT][WIDTH])
 	for (int y=0;y<HEIGHT;y++)
 		for (int x=0;x<WIDTH;x++)
 			if (fgcopies[y][x]&&fgcopies[y][x]==field[y][x].fg&&
-					// Exceptions
-					field[y][x].fg!='@'&&
-					field[y][x].fg!='%')
+					field[y][x].fg!='@') // Not player
 				move_tile(y,x,dirs[rand()%9],field);
 }
-/*
-void place_building(int ypos,int xpos,int height,int width,
-	tile_t field[HEIGHT][WIDTH])
+void randomly_place(char fg,char *fg_c,tile_t field[HEIGHT][WIDTH])
 {
-	for (int x=xpos;x<xpos+width;x++) {
+	int ypos=rand()%HEIGHT,xpos=rand()%WIDTH;
+	field[ypos][xpos].fg=fg;
+	field[ypos][xpos].fg_c=fg_c;
+}
+void place_building(int ypos,int xpos,int h,int w,
+		tile_t field[HEIGHT][WIDTH])
+{
+	/////////////// To-do: ABSTRACT PATTERNS
+	for (int x=xpos;x<=xpos+w;x++) {
 		field[ypos][x].fg='%';
-		field[ypos+height][x].fg='%';
-		// To-do: color
+		field[ypos][x].fg_c=wall_colors[CHECKER(ypos,x)];
+		field[ypos+h][x].fg='%';
+		field[ypos+h][x].fg_c=wall_colors[CHECKER(ypos+h,x)];
 	}
-	for (int y=ypos;y<ypos+height;y++) {
-		for (int x=xpos+1;x<xpos+width-1;x++) {
-			///////// To-do
+	for (int y=ypos;y<=ypos+h;y++) {
+		field[y][xpos].fg='%';
+		field[y][xpos].fg_c=wall_colors[CHECKER(y,xpos)];
+		field[y][xpos+w].fg='%';
+		field[y][xpos+w].fg_c=wall_colors[CHECKER(y,xpos+w)];
+		for (int x=xpos;x<=xpos+w;x++) {
+			field[y][x].bg='#';
+			field[y][x].bg_c=floor_colors[CHECKER(y,x)];
 		}
 	}
-	// To-do: add door
+	switch (rand()%4) {
+		case 0: // Up
+			field[ypos][xpos+w/2].fg='+';
+			field[ypos][xpos+w/2].bg='-';
+			field[ypos][xpos+w/2].fg_c=door_color;
+			field[ypos][xpos+w/2].bg_c=door_color;
+			break;
+		case 1: // Down
+			field[ypos+h][xpos+w/2].fg='+';
+			field[ypos+h][xpos+w/2].bg='-';
+			field[ypos+h][xpos+w/2].fg_c=door_color;
+			field[ypos+h][xpos+w/2].bg_c=door_color;
+			break;
+		case 2: // Left
+			field[ypos+h/2][xpos].fg='+';
+			field[ypos+h/2][xpos].bg='-';
+			field[ypos+h/2][xpos].fg_c=door_color;
+			field[ypos+h/2][xpos].bg_c=door_color;
+			break;
+		case 3: // Right
+			field[ypos+h/2][xpos+w].fg='+';
+			field[ypos+h/2][xpos+w].bg='-';
+			field[ypos+h/2][xpos+w].fg_c=door_color;
+			field[ypos+h/2][xpos+w].bg_c=door_color;
+			break;
+	}
 }
-*/
