@@ -8,6 +8,8 @@ Another important new feature of this rewrite is that it uses ASCII escape codes
 
 It's very rough now, but the rewrite will take shape in time.
 
+I'm also finally going to learn to use the `git` command instead of just using the online interface like a plebeian. It's about time.
+
 "mogue": Norman, borrowing from Old Norse, meaning mug or tankard. (via Wiktionary)
 
 (It's actually just 'rogue' with an M.)
