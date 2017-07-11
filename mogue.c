@@ -44,7 +44,7 @@ static char
     	*blue="\e[0;34;38m",
     	*brown="\e[0;33;38m",
 	*yellow="\e[1;33;38m",
-	*gray="\e[0;37;38m",
+	*dgray="\e[1;30;38m",
     	*grass_colors[2]={"\e[0;32;38m","\e[1;32;38m"},
 	*floor_colors[2]={"\e[0;37;38m","\e[1;37;38m"},
 	*wall_colors[2]={"\e[0;31;38m","\e[1;31;38m"},
@@ -65,8 +65,8 @@ int main(int argc,char **argv)
 	new_term.c_lflag&=(~ICANON&~ECHO);
 	tcsetattr(0,TCSANOW,&new_term);
 	// Variable definitions
-	int playerx,playery;
 	static tile_t field[HEIGHT][WIDTH];
+	int playerx,playery;
 	playery=rand()%HEIGHT;
 	playerx=rand()%WIDTH;
 	// Initialize field
@@ -94,14 +94,15 @@ int main(int argc,char **argv)
 	cull_walls(field);
 	// Initialize test subjects
 	for (int i=0;i<monsters;i++)
-		place_on_floor('&',gray,field);
+		place_on_floor('&',dgray,field);
 	for (int i=0;i<animals;i++)
 		place_on_grass('A',yellow,field);
 	for (int i=0;i<soldiers;i++)
 		place_on_floor('$',blue,field);
 	// Initialize player
-	field[playery][playerx].fg='@';
-	field[playery][playerx].fg_c=lblue;
+	if (field[playery][playerx].fg=='%')
+		place_door(&field[playery][playerx]);
+	set_fg(&field[playery][playerx],'@',lblue);
 	// Draw board
 	clear_screen();
 	draw_board(field);
