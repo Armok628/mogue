@@ -41,6 +41,7 @@ static char
     	*reset_color="\e[0;38;38m",
 	*red="\e[0;31;38m",
     	*lblue="\e[1;34;38m",
+    	*blue="\e[0;34;38m",
     	*brown="\e[0;33;38m",
 	*yellow="\e[1;33;38m",
 	*gray="\e[0;37;38m",
@@ -74,15 +75,30 @@ int main(int argc,char **argv)
 			field[y][x].bg=grass_chars[rand()%5];
 			field[y][x].bg_c=grass_colors[rand()%2];
 		}
+	// Parse command line arguments
+	int buildings=10,monsters=10,animals=10,soldiers=0;
+	switch (argc)
+	{
+		case 5:
+			sscanf(argv[4],"%i",&soldiers);
+		case 4:
+			sscanf(argv[3],"%i",&animals);
+		case 3:
+			sscanf(argv[2],"%i",&monsters);
+		case 2:
+			sscanf(argv[1],"%i",&buildings);
+	}
 	// Create a test house
-	for (int i=0;i<10;i++)
+	for (int i=0;i<buildings;i++)
 		place_random_building(field);
 	cull_walls(field);
 	// Initialize test subjects
-	for (int i=0;i<10;i++)
+	for (int i=0;i<monsters;i++)
 		place_on_floor('&',gray,field);
-	for (int i=0;i<10;i++)
+	for (int i=0;i<animals;i++)
 		place_on_grass('A',yellow,field);
+	for (int i=0;i<soldiers;i++)
+		place_on_floor('$',blue,field);
 	// Initialize player
 	field[playery][playerx].fg='@';
 	field[playery][playerx].fg_c=lblue;
