@@ -18,6 +18,7 @@ void reset_cursor();
 void draw_tile(tile_t tile);
 void draw_pos(int ypos,int xpos,tile_t field[HEIGHT][WIDTH]);
 void draw_board(tile_t field[HEIGHT][WIDTH]);
+int char_in_string(char c,char *string);
 int dir_offset(int axis,char dir);
 int move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH]);
 void update (tile_t field[HEIGHT][WIDTH]);
@@ -123,40 +124,29 @@ void draw_board(tile_t field[HEIGHT][WIDTH])
 			draw_pos(y,x,field);
 	reset_cursor();
 }
+int char_in_string(char c,char *string)
+{
+	for (;*string;string++)
+		if (c==*string)
+			return 1;
+	return 0;
+}
 int dir_offset(int axis,char dir)
 {
 	if (!axis) { // Y-axis (0)
-		switch (dir) {
-			// Up
-			case 'k':
-			case 'y':
-			case 'u':
-				return -1;
-			// Down
-			case 'j':
-			case 'b':
-			case 'n':
-				return 1;
-			// Nothing
-			default:
-				return 0;
-		}
+		if (char_in_string(dir,"kyu")) // Up
+			return -1;
+		else if (char_in_string(dir,"jbn")) // Down
+			return 1;
+		else // Neither
+			return 0;
 	} else { // X-axis (1)
-		switch (dir) {
-			// Left
-			case 'h':
-			case 'y':
-			case 'b':
-				return -1;
-			// Right
-			case 'l':
-			case 'u':
-			case 'n':
-				return 1;
-			// Nothing
-			default:
-				return 0;
-		}
+		if (char_in_string(dir,"hyb")) // Left
+			return -1;
+		else if (char_in_string(dir,"lun")) // Right
+			return 1;
+		else // Neither
+			return 0;
 	}	
 	return 0;
 }
@@ -175,36 +165,20 @@ int move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH])
 		case '+': // Door
 			return 0; // Always disallowed
 		case '@': // Player
-			switch (to->fg) {
-				case '%': // Wall
-				case '$': // Soldier
-					return 0;
-			}
+			if (char_in_string(to->fg,"%$"))
+				return 0;
 			break;
 		case '&': // Monster
-			switch (to->fg) {
-				case '%': // Wall
-				case '&': // Monster
-					return 0;
-			}
+			if (char_in_string(to->fg,"%&"))
+				return 0;
 			break;
 		case '$': // Soldier
-			switch (to->fg) {
-				case '%': // Wall
-				case '$': // Soldier
-				case '@': // Player
-				case 'A': // Animal
-					return 0;
-			}
+			if (char_in_string(to->fg,"%$@A"))
+				return 0;
 			break;
 		case 'A': // Animal
-			switch (to->fg) {
-				case '%': // Wall
-				case '@': // Player
-				case '$': // Soldier
-				case '&': // Monster
-					return 0;
-			}
+			if (char_in_string(to->fg,"%@$&"))
+				return 0;
 	}
 	// If the destination is not the source
 	if (ydest!=ypos||xdest!=xpos) {
