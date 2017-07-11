@@ -79,7 +79,8 @@ int main(int argc,char **argv)
 		input=fgetc(stdin);
 		if (input=='q')
 			break;
-		if (move_tile(player_y,player_x,input,field))
+		if (field[player_y][player_x].fg=='@'&&
+				move_tile(player_y,player_x,input,field))
 		{
 			player_y+=dir_offset(0,input);
 			player_x+=dir_offset(1,input);
