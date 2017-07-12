@@ -7,7 +7,7 @@
 #define BETW(x,min,max) (min<x&&x<max)
 #define CHECKER(x,y) ((x%2==0)^(y%2==0))
 #define WIDTH 80
-#define HEIGHT 23
+#define HEIGHT 24
 // Tile type definition
 typedef struct tile_t {
 	char fg,bg,*fg_c,*bg_c;
@@ -25,7 +25,7 @@ int dir_offset(int axis,char dir);
 void set_fg (tile_t *tile,char fg,char *fg_c);
 void set_bg (tile_t *tile,char bg,char *bg_c);
 void set_tile (tile_t *tile,char fg,char *fg_c,char bg,char *bg_c);
-int move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH]);
+char move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH]);
 void update (tile_t field[HEIGHT][WIDTH]);
 void randomly_place(char fg,char *fg_c,tile_t field[HEIGHT][WIDTH]);
 void spawn_player(tile_t field[HEIGHT][WIDTH],int *playery,int *playerx);
@@ -47,6 +47,9 @@ static char
     	*brown="\e[0;33;38m",
 	*yellow="\e[1;33;38m",
 	*dgray="\e[1;30;38m",
+	*white="\e[1;37;38m",
+	*teal="\e[0;36;38m",
+	*purple="\e[0;35;38m",
     	*grass_colors[2]={"\e[0;32;38m","\e[1;32;38m"},
 	*floor_colors[2]={"\e[0;37;38m","\e[1;37;38m"},
 	*wall_colors[2]={"\e[0;31;38m","\e[1;31;38m"},
@@ -139,7 +142,7 @@ void clear_screen()
 void move_cursor(int y,int x)
 {
 	// To-do: Change the coordinate system to being [x][y]
-	// Let this function alon	e deal with the weird conventions
+	// Let this function alone deal with the weird conventions
 	printf("\e[%d;%dH",y+1,x+1);
 }
 void reset_cursor()
@@ -210,50 +213,52 @@ void set_tile (tile_t *tile,char fg,char *fg_c,char bg,char *bg_c)
 	set_fg(tile,fg,fg_c);
 	set_bg(tile,bg,bg_c);
 }
-int move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH])
+char move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH])
 {
 	if (field[ypos][xpos].fg=='%')
-		return 0;
+		return '\0';
 	int ydest=ypos+dir_offset(0,dir),xdest=xpos+dir_offset(1,dir);
 	if (0>ydest||ydest>HEIGHT-1||0>xdest||xdest>WIDTH-1)
-		return 0;
+		return '\0';
 	tile_t *from=&field[ypos][xpos],*to=&field[ydest][xdest];
 	// Note: Describes only cases where movement is disallowed
 	switch (from->fg) {
 		case '%': // Wall
 		case '+': // Door
-			return 0; // Always disallowed
+			return '\0'; // Always disallowed
 		case '@': // Player
 			if (char_in_string(to->fg,"%$"))
-				return 0;
+				return '\0';
 			break;
 		case '&': // Monster
 			if (char_in_string(to->fg,"%&"))
-				return 0;
+				return '\0';
 			break;
 		case '$': // Soldier
 			if (char_in_string(to->fg,"%$@A"))
-				return 0;
+				return '\0';
 			break;
 		case 'A': // Animal
 			if (char_in_string(to->fg,"%@$&A"))
-				return 0;
+				return '\0';
 	}
 	// If the destination is not the source
 	if (ydest!=ypos||xdest!=xpos) {
+		char killed='\''; // (Represents grass)
 		// If the destination is a door
 		if (to->fg=='+') {
 			// Open it, not moving the creature
 			set_fg(to,'\0',NULL);
 			draw_pos(ydest,xdest,field);
 			// Report failure to move
-			return 0;
+			return '\0';
 		}
-		// If there's something else at the destination, kill it
+		// If there's something else at the destination:
 		if (to->fg) {
-			fprintf(debug_log,"%c killed a %c at [%i][%i]\n"
-					,from->fg,to->fg,ydest,xdest);
-			set_bg(to,to->fg,red);
+			killed=to->fg; // Remember what was captured
+			// If it's a creature, place a corpse
+			if (char_in_string(to->fg,"@&A$"))
+				set_bg(to,to->fg,red);
 		}
 		// Move the symbol and color
 		set_fg(to,from->fg,from->fg_c);
@@ -261,10 +266,10 @@ int move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH])
 		// Redraw the changed positions
 		draw_pos(ypos,xpos,field);
 		draw_pos(ydest,xdest,field);
-		// Report success
-		return 1;
+		// Return the value of what was captured
+		return killed;
 	} else
-		return 0;
+		return '\0';
 }
 void update (tile_t field[HEIGHT][WIDTH])
 {
