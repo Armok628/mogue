@@ -109,6 +109,9 @@ int main(int argc,char **argv)
 	char input;
 	for (;;) {
 		input=fgetc(stdin);
+		if (input==27&&fgetc(stdin)==91)
+			input=fgetc(stdin);
+		fprintf(debug_log,"Key pressed: %i\n",input);
 		if (input=='q')
 			break;
 		if (field[playery][playerx].fg=='@'
@@ -132,7 +135,7 @@ void clear_screen()
 void move_cursor(int y,int x)
 {
 	// To-do: Change the coordinate system to being [x][y]
-	// Let this function alone deal with the weird conventions
+	// Let this function alon	e deal with the weird conventions
 	printf("\e[%d;%dH",y+1,x+1);
 }
 void reset_cursor()
@@ -166,18 +169,18 @@ int char_in_string(char c,char *string)
 int dir_offset(int axis,char dir)
 {
 	if (!axis) { // Y-axis (0)
-		if (char_in_string(dir,"kyu")) // North
+		if (char_in_string(dir,"kyuA789")) // North
 			return -1;
-		else if (char_in_string(dir,"jbn")) // South
+		else if (char_in_string(dir,"jbnB123")) // South
 			return 1;
 		else // Neither
 			return 0;
 	} else { // X-axis (1)
-		if (char_in_string(dir,"hyb")) // West
+		if (char_in_string(dir,"hybD147")) // West
 			return -1;
-		else if (char_in_string(dir,"lun")) // East
+		else if (char_in_string(dir,"lunC369")) // East
 			return 1;
-		else // Neither
+		else // Neither	
 			return 0;
 	}	
 	return 0;
@@ -238,8 +241,11 @@ int move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH])
 			return 0;
 		}
 		// If there's something else at the destination, kill it
-		if (to->fg)
+		if (to->fg) {
+			fprintf(debug_log,"%c killed a %c at [%i][%i]\n"
+					,from->fg,to->fg,ydest,xdest);
 			set_bg(to,to->fg,red);
+		}
 		// Move the symbol and color
 		set_fg(to,from->fg,from->fg_c);
 		set_fg(from,'\0',NULL);
@@ -327,7 +333,7 @@ void place_building(int ypos,int xpos,int h,int w,
 	}
 	for (int x=xpos;x<=xpos+w;x++) {
 		// North/South walls
-		place_wall(&field[ypos][x],ypos,x);
+			place_wall(&field[ypos][x],ypos,x);
 		place_wall(&field[ypos+h][x],ypos+h,x);
 	}
 	switch (rand()%4) {
