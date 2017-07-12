@@ -17,18 +17,18 @@ typedef struct tile_t {
 // Function prototypes
 void clear_screen();
 void move_cursor(int x,int y);
-void reset_cursor();
 void set_cursor_visibility(int visible);
 void draw_tile(tile_t tile);
 void draw_pos(int ypos,int xpos,tile_t field[HEIGHT][WIDTH]);
 void draw_board(tile_t field[HEIGHT][WIDTH]);
-int char_in_string(char c,char *string);
+bool char_in_string(char c,char *string);
 int dir_offset(char axis,char dir);
 void set_fg (tile_t *tile,char fg,char *fg_c);
 void set_bg (tile_t *tile,char bg,char *bg_c);
 void set_tile (tile_t *tile,char fg,char *fg_c,char bg,char *bg_c);
 char move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH]);
 void update (tile_t field[HEIGHT][WIDTH]);
+bool try_summon(tile_t *tile,char fg,char *fg_c);
 void randomly_place(char fg,char *fg_c,tile_t field[HEIGHT][WIDTH]);
 void spawn_player(tile_t field[HEIGHT][WIDTH],int *playery,int *playerx);
 char move_player(char dir,int *playery,int *playerx
@@ -59,7 +59,7 @@ static char
 	*wall_colors[2]={"\e[0;31;38m","\e[1;31;38m"},
 	*grass_chars="\"\',.`",
 	*dirs="hjklyubn.",
-	*creatures="@&A$";
+	*creatures="@&A$Z";
 static FILE *debug_log;
 // Main function
 int main(int argc,char **argv)
@@ -127,6 +127,15 @@ int main(int argc,char **argv)
 		fprintf(debug_log,"Movement registered: %i\n",input);
 		if (input=='q')
 			break;
+		if (input=='z'&&has_scepter) {
+			input=fgetc(stdin);
+			int ytarget=playery+dir_offset('y',input);
+			int xtarget=playerx+dir_offset('x',input);
+			update(field);
+			try_summon(&field[ytarget][xtarget],'Z',teal);
+			draw_pos(ytarget,xtarget,field);
+			continue;
+		}
 		switch (move_player(input,&playery,&playerx,field)) {
 			case 'I':
 				has_scepter=true;
@@ -139,7 +148,7 @@ int main(int argc,char **argv)
 	tcsetattr(0,TCSANOW,&old_term);
 	printf("%s",reset_color);
 	set_cursor_visibility(1);
-	reset_cursor();
+	move_cursor(HEIGHT,0);
 	// Exit (success)
 	return 0;
 }
@@ -153,10 +162,6 @@ void move_cursor(int y,int x)
 	// To-do: Change the coordinate system to being [x][y]
 	// Let this function alone deal with the weird conventions
 	printf("\e[%d;%dH",y+1,x+1);
-}
-void reset_cursor()
-{
-	move_cursor(HEIGHT,0);
 }
 void set_cursor_visibility(int visible)
 {
@@ -181,12 +186,12 @@ void draw_board(tile_t field[HEIGHT][WIDTH])
 		for (int x=0;x<WIDTH;x++)
 			draw_pos(y,x,field);
 }
-int char_in_string(char c,char *string)
+bool char_in_string(char c,char *string)
 {
 	for (;*string;string++)
 		if (c==*string)
-			return 1;
-	return 0;
+			return true;
+	return false;
 }
 int dir_offset(char axis,char dir)
 {
@@ -250,6 +255,10 @@ char move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH])
 		case 'A': // Animal
 			if (char_in_string(to->fg,"%@$&A"))
 				return '\0';
+			break;
+		case 'Z': // Zombie
+			if (char_in_string(to->fg,"%Z@"))
+				return '\0';
 	}
 	// If the destination is not the source
 	if (ydest!=ypos||xdest!=xpos) {
@@ -296,21 +305,26 @@ void update (tile_t field[HEIGHT][WIDTH])
 					&&field[y][x].fg!='@') // Not player
 				move_tile(y,x,dirs[rand()%9],field);
 }
+bool try_summon(tile_t *tile,char fg,char *fg_c)
+{
+	if (!tile->fg) {
+		tile->fg=fg;
+		tile->fg_c=fg_c;
+		return true;
+	}
+	return false;
+}
 void randomly_place(char fg,char *fg_c,tile_t field[HEIGHT][WIDTH])
 {
 	int ypos=rand()%HEIGHT,xpos=rand()%WIDTH;
-	if (!field[ypos][xpos].fg)
-		set_fg(&field[ypos][xpos],fg,fg_c);
-	else
+	if (!try_summon(&field[ypos][xpos],fg,fg_c))
 		randomly_place(fg,fg_c,field);
 }
 void spawn_player(tile_t field[HEIGHT][WIDTH],int *py,int *px)
 {
 	*py=rand()%HEIGHT;
 	*px=rand()%WIDTH;
-	if (!field[*py][*px].fg)
-		set_fg(&field[*py][*px],'@',lblue);
-	else
+	if (!try_summon(&field[*py][*px],'@',lblue))
 		spawn_player(field,py,px);
 }
 char move_player(char dir,int *playery,int *playerx,tile_t field[HEIGHT][WIDTH])
