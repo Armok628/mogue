@@ -8,6 +8,8 @@
 #define CHECKER(x,y) ((x%2==0)^(y%2==0))
 #define WIDTH 80
 #define HEIGHT 24
+// bool type definition
+typedef enum {false,true} bool;
 // Tile type definition
 typedef struct tile_t {
 	char fg,bg,*fg_c,*bg_c;
@@ -21,7 +23,7 @@ void draw_tile(tile_t tile);
 void draw_pos(int ypos,int xpos,tile_t field[HEIGHT][WIDTH]);
 void draw_board(tile_t field[HEIGHT][WIDTH]);
 int char_in_string(char c,char *string);
-int dir_offset(int axis,char dir);
+int dir_offset(char axis,char dir);
 void set_fg (tile_t *tile,char fg,char *fg_c);
 void set_bg (tile_t *tile,char bg,char *bg_c);
 void set_tile (tile_t *tile,char fg,char *fg_c,char bg,char *bg_c);
@@ -29,6 +31,8 @@ char move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH]);
 void update (tile_t field[HEIGHT][WIDTH]);
 void randomly_place(char fg,char *fg_c,tile_t field[HEIGHT][WIDTH]);
 void spawn_player(tile_t field[HEIGHT][WIDTH],int *playery,int *playerx);
+char move_player(char dir,int *playery,int *playerx
+		,tile_t field[HEIGHT][WIDTH]);
 void place_on_grass(char fg,char *fg_c,tile_t field[HEIGHT][WIDTH]);
 void place_on_floor(char fg,char *fg_c,tile_t field[HEIGHT][WIDTH]);
 void place_wall(tile_t *tile,int y,int x);
@@ -53,8 +57,9 @@ static char
     	*grass_colors[2]={"\e[0;32;38m","\e[1;32;38m"},
 	*floor_colors[2]={"\e[0;37;38m","\e[1;37;38m"},
 	*wall_colors[2]={"\e[0;31;38m","\e[1;31;38m"},
-	grass_chars[5]="\"\',.`",
-	dirs[9]="hjklyubn.";
+	*grass_chars="\"\',.`",
+	*dirs="hjklyubn.",
+	*creatures="@&A$";
 static FILE *debug_log;
 // Main function
 int main(int argc,char **argv)
@@ -107,22 +112,26 @@ int main(int argc,char **argv)
 		place_on_floor('$',blue,field);
 	// Initialize player
 	spawn_player(field,&playery,&playerx);
+	// Place item (temporary)
+	randomly_place('I',purple,field);
 	// Draw board
 	clear_screen();
 	draw_board(field);
 	// Control loop
 	char input;
+	bool has_scepter=false;
 	for (;;) {
 		input=fgetc(stdin);
 		if (input==27&&fgetc(stdin)==91)
 			input=fgetc(stdin);
-		fprintf(debug_log,"Key pressed: %i\n",input);
+		fprintf(debug_log,"Movement registered: %i\n",input);
 		if (input=='q')
 			break;
-		if (field[playery][playerx].fg=='@'
-				&&move_tile(playery,playerx,input,field)) {
-			playery+=dir_offset(0,input);
-			playerx+=dir_offset(1,input);
+		switch (move_player(input,&playery,&playerx,field)) {
+			case 'I':
+				has_scepter=true;
+				field[playery][playerx].fg_c=purple;
+				draw_pos(playery,playerx,field);
 		}
 		update(field);
 	}
@@ -179,24 +188,23 @@ int char_in_string(char c,char *string)
 			return 1;
 	return 0;
 }
-int dir_offset(int axis,char dir)
+int dir_offset(char axis,char dir)
 {
-	if (!axis) { // Y-axis (0)
-		if (char_in_string(dir,"kyuA789")) // North
-			return -1;
-		else if (char_in_string(dir,"jbnB123")) // South
-			return 1;
-		else // Neither
+	switch (axis) {
+		case 'y':
+			if (char_in_string(dir,"kyuA789"))
+				return -1;
+			if (char_in_string(dir,"jbnB123"))
+				return 1;
 			return 0;
-	} else { // X-axis (1)
-		if (char_in_string(dir,"hybD147")) // West
-			return -1;
-		else if (char_in_string(dir,"lunC369")) // East
-			return 1;
-		else // Neither	
+		case 'x':
+			if (char_in_string(dir,"hybD147"))
+				return -1;
+			if (char_in_string(dir,"lunC369"))
+				return 1;
+		default:
 			return 0;
-	}	
-	return 0;
+	}
 }
 void set_fg (tile_t *tile,char fg,char *fg_c)
 {
@@ -217,7 +225,7 @@ char move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH])
 {
 	if (field[ypos][xpos].fg=='%')
 		return '\0';
-	int ydest=ypos+dir_offset(0,dir),xdest=xpos+dir_offset(1,dir);
+	int ydest=ypos+dir_offset('y',dir),xdest=xpos+dir_offset('x',dir);
 	if (0>ydest||ydest>HEIGHT-1||0>xdest||xdest>WIDTH-1)
 		return '\0';
 	tile_t *from=&field[ypos][xpos],*to=&field[ydest][xdest];
@@ -225,6 +233,7 @@ char move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH])
 	switch (from->fg) {
 		case '%': // Wall
 		case '+': // Door
+		case 'I': // Scepter
 			return '\0'; // Always disallowed
 		case '@': // Player
 			if (char_in_string(to->fg,"%$"))
@@ -256,8 +265,10 @@ char move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH])
 		// If there's something else at the destination:
 		if (to->fg) {
 			killed=to->fg; // Remember what was captured
+			fprintf(debug_log,"%c moved to %c at [%i][%i]\n"
+					,from->fg,to->fg,ydest,xdest);
 			// If it's a creature, place a corpse
-			if (char_in_string(to->fg,"@&A$"))
+			if (char_in_string(to->fg,creatures))
 				set_bg(to,to->fg,red);
 		}
 		// Move the symbol and color
@@ -301,6 +312,17 @@ void spawn_player(tile_t field[HEIGHT][WIDTH],int *py,int *px)
 		set_fg(&field[*py][*px],'@',lblue);
 	else
 		spawn_player(field,py,px);
+}
+char move_player(char dir,int *playery,int *playerx,tile_t field[HEIGHT][WIDTH])
+{
+	char result='\0';
+	if (field[*playery][*playerx].fg!='@')
+		return '\0';
+	if (result=move_tile(*playery,*playerx,dir,field)) {
+		*playery+=dir_offset('y',dir);
+		*playerx+=dir_offset('x',dir);
+	}
+	return result;
 }
 void place_on_grass(char fg,char *fg_c,tile_t field[HEIGHT][WIDTH])
 {
