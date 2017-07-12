@@ -27,6 +27,7 @@ void set_tile (tile_t *tile,char fg,char *fg_c,char bg,char *bg_c);
 int move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH]);
 void update (tile_t field[HEIGHT][WIDTH]);
 void randomly_place(char fg,char *fg_c,tile_t field[HEIGHT][WIDTH]);
+void spawn_player(tile_t field[HEIGHT][WIDTH],int *playery,int *playerx);
 void place_on_grass(char fg,char *fg_c,tile_t field[HEIGHT][WIDTH]);
 void place_on_floor(char fg,char *fg_c,tile_t field[HEIGHT][WIDTH]);
 void place_wall(tile_t *tile,int y,int x);
@@ -76,7 +77,7 @@ int main(int argc,char **argv)
 			field[y][x].bg_c=grass_colors[rand()%2];
 		}
 	// Parse command line arguments
-	int buildings=10,monsters=10,animals=10,soldiers=0;
+	int buildings=20,monsters=20,animals=20,soldiers=20;
 	switch (argc)
 	{
 		case 5:
@@ -100,9 +101,7 @@ int main(int argc,char **argv)
 	for (int i=0;i<soldiers;i++)
 		place_on_floor('$',blue,field);
 	// Initialize player
-	if (field[playery][playerx].fg=='%')
-		place_door(&field[playery][playerx]);
-	set_fg(&field[playery][playerx],'@',lblue);
+	spawn_player(field,&playery,&playerx);
 	// Draw board
 	clear_screen();
 	draw_board(field);
@@ -274,6 +273,15 @@ void randomly_place(char fg,char *fg_c,tile_t field[HEIGHT][WIDTH])
 		set_fg(&field[ypos][xpos],fg,fg_c);
 	else
 		randomly_place(fg,fg_c,field);
+}
+void spawn_player(tile_t field[HEIGHT][WIDTH],int *py,int *px)
+{
+	*py=rand()%HEIGHT;
+	*px=rand()%WIDTH;
+	if (!field[*py][*px].fg)
+		set_fg(&field[*py][*px],'@',lblue);
+	else
+		spawn_player(field,py,px);
 }
 void place_on_grass(char fg,char *fg_c,tile_t field[HEIGHT][WIDTH])
 {
