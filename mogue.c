@@ -15,7 +15,6 @@ typedef struct tile_t {
 // Function prototypes
 void clear_screen();
 void move_cursor(int x,int y);
-void reset_cursor();
 void set_cursor_visibility(int visible);
 void draw_tile(tile_t tile);
 void draw_pos(int ypos,int xpos,tile_t field[HEIGHT][WIDTH]);
@@ -130,7 +129,7 @@ int main(int argc,char **argv)
 	tcsetattr(0,TCSANOW,&old_term);
 	printf("%s",reset_color);
 	set_cursor_visibility(1);
-	reset_cursor();
+	move_cursor(HEIGHT,0);
 	// Exit (success)
 	return 0;
 }
@@ -144,10 +143,6 @@ void move_cursor(int y,int x)
 	// To-do: Change the coordinate system to being [x][y]
 	// Let this function alone deal with the weird conventions
 	printf("\e[%d;%dH",y+1,x+1);
-}
-void reset_cursor()
-{
-	move_cursor(HEIGHT,0);
 }
 void set_cursor_visibility(int visible)
 {
