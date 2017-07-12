@@ -19,29 +19,33 @@ void clear_screen();
 void move_cursor(int x,int y);
 void set_cursor_visibility(int visible);
 void draw_tile(tile_t tile);
-void draw_pos(int ypos,int xpos,tile_t field[WIDTH][HEIGHT]);
-void draw_board(tile_t field[WIDTH][HEIGHT]);
+void draw_pos(int ypos,int xpos,tile_t zone[WIDTH][HEIGHT]);
+void draw_board(tile_t zone[WIDTH][HEIGHT]);
 bool char_in_string(char c,char *string);
 int dir_offset(char axis,char dir);
 void set_fg (tile_t *tile,char fg,char *fg_c);
 void set_bg (tile_t *tile,char bg,char *bg_c);
 void set_tile (tile_t *tile,char fg,char *fg_c,char bg,char *bg_c);
-char move_tile(int xpos,int ypos,char dir,tile_t field[WIDTH][HEIGHT]);
-void update (tile_t field[WIDTH][HEIGHT]);
+tile_t *random_tile(tile_t zone[WIDTH][HEIGHT]);
+tile_t *random_grass(tile_t zone[WIDTH][HEIGHT]);
+tile_t *random_floor(tile_t zone[WIDTH][HEIGHT]);
+char move_tile(int xpos,int ypos,char dir,tile_t zone[WIDTH][HEIGHT]);
+void update (tile_t zone[WIDTH][HEIGHT]);
 bool try_summon(tile_t *tile,char fg,char *fg_c);
-void randomly_place(char fg,char *fg_c,tile_t field[WIDTH][HEIGHT]);
-void spawn_player(tile_t field[WIDTH][HEIGHT],int *playerx,int *playery);
+void randomly_place(char fg,char *fg_c,tile_t zone[WIDTH][HEIGHT]);
+void spawn_player(tile_t zone[WIDTH][HEIGHT],int *playerx,int *playery);
 char move_player(char dir,int *playerx,int *playery
-		,tile_t field[WIDTH][HEIGHT]);
-void place_on_grass(char fg,char *fg_c,tile_t field[WIDTH][HEIGHT]);
-void place_on_floor(char fg,char *fg_c,tile_t field[WIDTH][HEIGHT]);
-void place_wall(tile_t *tile,int x,int y);
-void place_floor(tile_t *tile,int x,int y);
-void place_door(tile_t *tile);
-void place_building(int xpos,int ypos,int h,int w
-		,tile_t field[WIDTH][HEIGHT]);
-void place_random_building(tile_t field[WIDTH][HEIGHT]);
-void cull_walls(tile_t field[WIDTH][HEIGHT]);
+		,tile_t zone[WIDTH][HEIGHT]);
+void place_on_grass(char fg,char *fg_c,tile_t zone[WIDTH][HEIGHT]);
+void place_on_floor(char fg,char *fg_c,tile_t zone[WIDTH][HEIGHT]);
+void set_wall(tile_t *tile,int x,int y);
+void set_floor(tile_t *tile,int x,int y);
+void set_door(tile_t *tile);
+void make_building(int xpos,int ypos,int h,int w
+		,tile_t zone[WIDTH][HEIGHT]);
+void make_random_building(tile_t zone[WIDTH][HEIGHT]);
+void cull_walls(tile_t zone[WIDTH][HEIGHT]);
+void make_paths(tile_t zone[WIDTH][HEIGHT]);
 // Global definitions
 static char
     	*reset_color="\e[0;38;38m",
@@ -80,14 +84,14 @@ int main(int argc,char **argv)
 	int playerx,playery;
 	playerx=rand()%WIDTH;
 	playery=rand()%HEIGHT;
-	// Initialize field
+	// Initialize zone
 	for (int x=0;x<WIDTH;x++)
 		for (int y=0;y<HEIGHT;y++) {
 			field[x][y].bg=grass_chars[rand()%5];
 			field[x][y].bg_c=grass_colors[rand()%2];
 		}
 	// Parse command line arguments
-	int buildings=20,monsters=20,animals=20,soldiers=20;
+	int buildings=20,monsters=20,animals=20,soldiers=20; // Defaults
 	switch (argc)
 	{
 		case 5:
@@ -101,7 +105,7 @@ int main(int argc,char **argv)
 	}
 	// Create a test house
 	for (int i=0;i<buildings;i++)
-		place_random_building(field);
+		make_random_building(field);
 	cull_walls(field);
 	// Initialize test subjects
 	for (int i=0;i<monsters;i++)
@@ -125,7 +129,6 @@ int main(int argc,char **argv)
 		if (input==27&&fgetc(stdin)==91)
 			input=fgetc(stdin);
 		fprintf(debug_log,"Input registered: %i\n",input);
-		fprintf(debug_log,"Player is at (%i, %i)\n",playerx,playery);
 		if (input=='q')
 			break;
 		if (input=='z'&&has_scepter) {
@@ -142,6 +145,7 @@ int main(int argc,char **argv)
 				has_scepter=true;
 				field[playerx][playery].fg_c=purple;
 				draw_pos(playerx,playery,field);
+				break;
 		}
 		update(field);
 	}
@@ -174,16 +178,16 @@ void draw_tile(tile_t tile)
 	printf("%s%c",tile.fg?tile.fg_c:tile.bg_c
 			,tile.fg?tile.fg:tile.bg);
 }
-void draw_pos(int xpos,int ypos,tile_t field[WIDTH][HEIGHT])
+void draw_pos(int xpos,int ypos,tile_t zone[WIDTH][HEIGHT])
 {
 	move_cursor(xpos,ypos);
-	draw_tile(field[xpos][ypos]);
+	draw_tile(zone[xpos][ypos]);
 }
-void draw_board(tile_t field[WIDTH][HEIGHT])
+void draw_board(tile_t zone[WIDTH][HEIGHT])
 {
 	for (int x=0;x<WIDTH;x++)
 		for (int y=0;y<HEIGHT;y++)
-			draw_pos(x,y,field);
+			draw_pos(x,y,zone);
 }
 bool char_in_string(char c,char *string)
 {
@@ -225,17 +229,38 @@ void set_tile (tile_t *tile,char fg,char *fg_c,char bg,char *bg_c)
 	set_fg(tile,fg,fg_c);
 	set_bg(tile,bg,bg_c);
 }
-char move_tile(int xpos,int ypos,char dir,tile_t field[WIDTH][HEIGHT])
+tile_t *random_tile(tile_t zone[WIDTH][HEIGHT])
+{
+	return &zone[rand()%WIDTH][rand()%HEIGHT];
+}
+tile_t *random_grass(tile_t zone[WIDTH][HEIGHT])
+{
+	tile_t *tile=random_tile(zone);
+	if (!tile->fg&&char_in_string(tile->bg,grass_chars))
+		return tile;
+	else
+		return random_grass(zone);
+}
+tile_t *random_floor(tile_t zone[WIDTH][HEIGHT])
+{
+	tile_t *tile=random_tile(zone);
+	if (!tile->fg&&tile->bg=='#')
+		return tile;
+	else
+		return random_floor(zone);
+}
+char move_tile(int xpos,int ypos,char dir,tile_t zone[WIDTH][HEIGHT])
 {
 	int xdest=xpos+dir_offset('x',dir),ydest=ypos+dir_offset('y',dir);
 	if (0>xdest||xdest>WIDTH-1||0>ydest||ydest>HEIGHT-1)
 		return '\0';
-	tile_t *from=&field[xpos][ypos],*to=&field[xdest][ydest];
+	tile_t *from=&zone[xpos][ypos],*to=&zone[xdest][ydest];
 	// Note: Describes only cases where movement is disallowed
 	switch (from->fg) {
 		case '%': // Wall
 		case '+': // Door
 		case 'I': // Scepter
+		case '>': // Staircase (down)
 			return '\0'; // Always disallowed
 		case '@': // Player
 			if (char_in_string(to->fg,"%$"))
@@ -264,7 +289,7 @@ char move_tile(int xpos,int ypos,char dir,tile_t field[WIDTH][HEIGHT])
 		if (to->fg=='+') {
 			// Open it, not moving the creature
 			set_fg(to,'\0',NULL);
-			draw_pos(xdest,ydest,field);
+			draw_pos(xdest,ydest,zone);
 			// Report failure to move
 			return '\0';
 		}
@@ -281,26 +306,26 @@ char move_tile(int xpos,int ypos,char dir,tile_t field[WIDTH][HEIGHT])
 		set_fg(to,from->fg,from->fg_c);
 		set_fg(from,'\0',NULL);
 		// Redraw the changed positions
-		draw_pos(xpos,ypos,field);
-		draw_pos(xdest,ydest,field);
+		draw_pos(xpos,ypos,zone);
+		draw_pos(xdest,ydest,zone);
 		// Return the value of what was captured
 		return killed;
 	} else
 		return '\0';
 }
-void update (tile_t field[WIDTH][HEIGHT])
+void update (tile_t zone[WIDTH][HEIGHT])
 {
 	// Make a matrix of the foreground characters
 	char fgcopies[WIDTH][HEIGHT];
 	for (int x=0;x<WIDTH;x++)
 		for (int y=0;y<HEIGHT;y++)
-			fgcopies[x][y]=field[x][y].fg;
+			fgcopies[x][y]=zone[x][y].fg;
 	// For each occupied space, if it hasn't moved yet, move it
 	for (int x=0;x<WIDTH;x++)
 		for (int y=0;y<HEIGHT;y++)
-			if (fgcopies[x][y]&&fgcopies[x][y]==field[x][y].fg
-					&&field[x][y].fg!='@') // Not player
-				move_tile(x,y,dirs[rand()%9],field);
+			if (fgcopies[x][y]&&fgcopies[x][y]==zone[x][y].fg
+					&&zone[x][y].fg!='@') // Not player
+				move_tile(x,y,dirs[rand()%9],zone);
 }
 bool try_summon(tile_t *tile,char fg,char *fg_c)
 {
@@ -311,98 +336,88 @@ bool try_summon(tile_t *tile,char fg,char *fg_c)
 	}
 	return false;
 }
-void randomly_place(char fg,char *fg_c,tile_t field[WIDTH][HEIGHT])
+void randomly_place(char fg,char *fg_c,tile_t zone[WIDTH][HEIGHT])
 {
-	int xpos=rand()%WIDTH,ypos=rand()%HEIGHT;
-	if (!try_summon(&field[xpos][ypos],fg,fg_c))
-		randomly_place(fg,fg_c,field);
+	if (!try_summon(random_tile(zone),fg,fg_c))
+		randomly_place(fg,fg_c,zone);
 }
-void spawn_player(tile_t field[WIDTH][HEIGHT],int *px,int *py)
+void spawn_player(tile_t zone[WIDTH][HEIGHT],int *px,int *py)
 {
 	*px=rand()%WIDTH;
 	*py=rand()%HEIGHT;
-	if (!try_summon(&field[*px][*py],'@',lblue))
-		spawn_player(field,px,py);
+	if (!try_summon(&zone[*px][*py],'@',lblue))
+		spawn_player(zone,px,py);
 }
-char move_player(char dir,int *playerx,int *playery,tile_t field[WIDTH][HEIGHT])
+char move_player(char dir,int *playerx,int *playery
+		,tile_t zone[WIDTH][HEIGHT])
 {
 	char result='\0';
-	if (field[*playerx][*playery].fg!='@')
+	if (zone[*playerx][*playery].fg!='@')
 		return '\0';
-	if (result=move_tile(*playerx,*playery,dir,field)) {
+	if (result=move_tile(*playerx,*playery,dir,zone)) {
 		*playerx+=dir_offset('x',dir);
 		*playery+=dir_offset('y',dir);
 	}
 	return result;
 }
-void place_on_grass(char fg,char *fg_c,tile_t field[WIDTH][HEIGHT])
+void place_on_grass(char fg,char *fg_c,tile_t zone[WIDTH][HEIGHT])
 {
-	int xpos=rand()%WIDTH,ypos=rand()%HEIGHT;
-	if (!field[xpos][ypos].fg
-			&&char_in_string(field[xpos][ypos].bg,grass_chars))
-		set_fg(&field[xpos][ypos],fg,fg_c);
-	else
-		place_on_grass(fg,fg_c,field);
+	set_fg(random_grass(zone),fg,fg_c);
 }
-void place_on_floor(char fg,char *fg_c,tile_t field[WIDTH][HEIGHT])
+void place_on_floor(char fg,char *fg_c,tile_t zone[WIDTH][HEIGHT])
 {
-	int xpos=rand()%WIDTH,ypos=rand()%HEIGHT;
-	if (!field[xpos][ypos].fg
-			&&field[xpos][ypos].bg=='#')
-		set_fg(&field[xpos][ypos],fg,fg_c);
-	else
-		place_on_floor(fg,fg_c,field);
+	set_fg(random_floor(zone),fg,fg_c);
 }
-void place_wall(tile_t *tile,int x,int y)
+void set_wall(tile_t *tile,int x,int y)
 {
 	set_tile(tile,'%',wall_colors[CHECKER(x,y)]
 			,'%',wall_colors[CHECKER(x,y)]);
 }
-void place_floor(tile_t *tile,int x,int y)
+void set_floor(tile_t *tile,int x,int y)
 {
 	set_tile(tile,'\0',NULL,'#',floor_colors[CHECKER(x,y)]);
 }
-void place_door(tile_t *tile)
+void set_door(tile_t *tile)
 {
 	set_tile(tile,'+',brown,'-',brown);
 }
-void place_building(int xpos,int ypos,int w,int h,
-		tile_t field[WIDTH][HEIGHT])
+void make_building(int xpos,int ypos,int w,int h,
+		tile_t zone[WIDTH][HEIGHT])
 {
 	for (int x=xpos;x<=xpos+w;x++) {
 		for (int y=ypos;y<=ypos+h;y++)
 			// Floors
-			place_floor(&field[x][y],x,y);
+			set_floor(&zone[x][y],x,y);
 		// West/East walls
-		place_wall(&field[x][ypos],x,ypos);
-		place_wall(&field[x][ypos+h],x,ypos+h);
+		set_wall(&zone[x][ypos],x,ypos);
+		set_wall(&zone[x][ypos+h],x,ypos+h);
 	}
 	for (int y=ypos;y<=ypos+h;y++) {
 		// North/South walls
-			place_wall(&field[xpos][y],xpos,y);
-		place_wall(&field[xpos+w][y],xpos+w,y);
+			set_wall(&zone[xpos][y],xpos,y);
+		set_wall(&zone[xpos+w][y],xpos+w,y);
 	}
 	switch (rand()%4) {
 		case 0: // North
-			place_door(&field[xpos][ypos+h/2]);
+			set_door(&zone[xpos][ypos+h/2]);
 			break;
 		case 1: // South
-			place_door(&field[xpos+w][ypos+h/2]);
+			set_door(&zone[xpos+w][ypos+h/2]);
 			break;
 		case 2: // West
-			place_door(&field[xpos+w/2][ypos]);
+			set_door(&zone[xpos+w/2][ypos]);
 			break;
 		case 3: // East
-			place_door(&field[xpos+w/2][ypos+h]);
+			set_door(&zone[xpos+w/2][ypos+h]);
 	}
 }
-void place_random_building(tile_t field[WIDTH][HEIGHT])
+void make_random_building(tile_t zone[WIDTH][HEIGHT])
 {
 	int width=3+rand()%(WIDTH/4),height=3+rand()%(HEIGHT/4);
 	int x=1+rand()%(WIDTH-2-width),y=1+rand()%(HEIGHT-2-height);
-	place_building(x,y,width,height,field);
+	make_building(x,y,width,height,zone);
 }
-void cull_walls(tile_t field[WIDTH][HEIGHT])
+void cull_walls(tile_t zone[WIDTH][HEIGHT])
 {
 	// Beware: ugly formatting ahead
 	int walls_removed;
@@ -410,13 +425,16 @@ void cull_walls(tile_t field[WIDTH][HEIGHT])
 		walls_removed=0;
 		for (int x=0;x<WIDTH;x++)
 			for (int y=0;y<HEIGHT;y++)
-				if (char_in_string(field[x][y].fg,"%+")
-						&&((field[x+1][y].bg=='#'
-						&&field[x-1][y].bg=='#')
-						||(field[x][y-1].bg=='#'
-						&&field[x][y+1].bg=='#'))) {
-					place_floor(&field[x][y],x,y);
+				if (char_in_string(zone[x][y].fg,"%+")
+						&&((zone[x+1][y].bg=='#'
+						&&zone[x-1][y].bg=='#')
+						||(zone[x][y-1].bg=='#'
+						&&zone[x][y+1].bg=='#'))) {
+					set_floor(&zone[x][y],x,y);
 					walls_removed++;
 				}
 	} while (walls_removed>0);
+}
+void make_paths(tile_t zone[WIDTH][HEIGHT])
+{
 }
