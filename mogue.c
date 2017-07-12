@@ -16,6 +16,7 @@ typedef struct tile_t {
 void clear_screen();
 void move_cursor(int x,int y);
 void reset_cursor();
+void set_cursor_visibility(int visible);
 void draw_tile(tile_t tile);
 void draw_pos(int ypos,int xpos,tile_t field[HEIGHT][WIDTH]);
 void draw_board(tile_t field[HEIGHT][WIDTH]);
@@ -65,6 +66,7 @@ int main(int argc,char **argv)
 	new_term=old_term;
 	new_term.c_lflag&=(~ICANON&~ECHO);
 	tcsetattr(0,TCSANOW,&new_term);
+	set_cursor_visibility(0);
 	// Variable definitions
 	static tile_t field[HEIGHT][WIDTH];
 	int playerx,playery;
@@ -124,6 +126,8 @@ int main(int argc,char **argv)
 	// Clean up terminal
 	tcsetattr(0,TCSANOW,&old_term);
 	printf("%s",reset_color);
+	set_cursor_visibility(1);
+	reset_cursor();
 	// Exit (success)
 	return 0;
 }
@@ -142,6 +146,13 @@ void reset_cursor()
 {
 	move_cursor(HEIGHT,0);
 }
+void set_cursor_visibility(int visible)
+{
+	if (visible)
+		printf("\e[?25h");
+	else
+		printf("\e[?25l");
+}
 void draw_tile(tile_t tile)
 {
 	printf("%s%c",tile.fg?tile.fg_c:tile.bg_c
@@ -157,7 +168,6 @@ void draw_board(tile_t field[HEIGHT][WIDTH])
 	for (int y=0;y<HEIGHT;y++)
 		for (int x=0;x<WIDTH;x++)
 			draw_pos(y,x,field);
-	reset_cursor();
 }
 int char_in_string(char c,char *string)
 {
@@ -236,7 +246,6 @@ int move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH])
 			// Open it, not moving the creature
 			set_fg(to,'\0',NULL);
 			draw_pos(ydest,xdest,field);
-			reset_cursor();
 			// Report failure to move
 			return 0;
 		}
@@ -252,7 +261,6 @@ int move_tile(int ypos,int xpos,char dir,tile_t field[HEIGHT][WIDTH])
 		// Redraw the changed positions
 		draw_pos(ypos,xpos,field);
 		draw_pos(ydest,xdest,field);
-		reset_cursor();
 		// Report success
 		return 1;
 	} else
