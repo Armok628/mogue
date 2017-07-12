@@ -1,7 +1,7 @@
 # mogue
-Now written in pure C (std=99) without ncurses.
+Now written in pure C (without ncurses).
 
-An important new detail of this rewrite is that it uses ASCII escape codes instead of a special library for terminal display tasks. termios is used only for setting terminal attributes to allow for unbuffered and non-echoing input.
+An important new detail of this rewrite is that it uses ASCII escape codes instead of a special library for terminal display tasks. termios is used only for setting terminal attributes to allow for unbuffered and non-echoing input. As it turns out, if you compile the game with cygwin and have cygwin1.dll installed or in the same folder, the exe will work with Windows.
 
 The rewrite solves the screen flickering of the old version (caused by redrawing the whole screen every update), and better cuts down on needless complexity, in my opinion.
 
