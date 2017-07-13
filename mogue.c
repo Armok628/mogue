@@ -298,11 +298,11 @@ char move_tile(int pos,char dir,tile_t *zone)
 				return '\0';
 			break;
 		case 'A': // Animal
-			if (char_in_string(to->fg,"%@$&A"))
+			if (char_in_string(to->fg,"%@$&A+"))
 				return '\0';
 			break;
 		case 'Z': // Zombie
-			if (char_in_string(to->fg,"%Z@"))
+			if (char_in_string(to->fg,"%Z@+"))
 				return '\0';
 	}
 	// If the destination is not the source
