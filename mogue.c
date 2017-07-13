@@ -61,7 +61,7 @@ static char
 	*purple="\e[0;35;38m",
 	*pink="\e[1;35;38m",
     	*grass_colors[2]={"\e[0;32;38m","\e[1;32;38m"},
-	*floor_colors[2]={"\e[0;37;38m","\e[1;37;38m"},
+	*floor_colors[2]={"\e[1;37;38m","\e[0;38;38m"},
 	*wall_colors[2]={"\e[0;31;38m","\e[1;31;38m"},
 	*rock_colors[2]={"\e[0;37;38m","\e[1;30;38m"},
 	*grass_chars="\"\',.`",
@@ -304,8 +304,9 @@ char move_tile(int pos,char dir,tile_t *zone)
 			killed=to->fg; // Remember what was captured
 			fprintf(debug_log,"%c moved into %c at [%i]\n"
 					,from->fg,to->fg,dest);
-			// If it's a creature, place a corpse
-			if (char_in_string(to->fg,creatures))
+			// If it's a creature not on stairs, place a corpse
+			if (char_in_string(to->fg,creatures)
+					&&!char_in_string(to->bg,"<>"))
 				set_bg(to,to->fg,red);
 		}
 		// Move the symbol and color
@@ -456,8 +457,8 @@ tile_t *create_field(int b,int m,int a,int s)
 	fprintf(debug_log,"Training soldiers...\n");
 	for (int i=0;i<s;i++)
 		place_on_floor('$',blue,field);
-	fprintf(debug_log,"Digging stairs...\n");
-	set_bg(random_floor(field),'>',dgray);
+	fprintf(debug_log,"Digging stairwell...\n");
+	set_bg(random_floor(field),'>',brown);
 	fprintf(debug_log,"Done!\n");
 	return field;
 }
@@ -477,7 +478,7 @@ tile_t *create_dungeon(int b,int m)
 	for (int i=0;i<m;i++)
 		place_on_floor('&',dgray,dungeon);
 	fprintf(debug_log,"Digging stairwell...\n");
-	set_bg(random_floor(dungeon),'<',dgray);
+	set_bg(random_floor(dungeon),'<',brown);
 	fprintf(debug_log,"Crafting scepter...\n");
 	randomly_place('I',purple,dungeon);
 	fprintf(debug_log,"Done!\n");
