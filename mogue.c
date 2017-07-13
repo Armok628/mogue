@@ -141,7 +141,7 @@ int main(int argc,char **argv)
 			try_summon(&current_zone[target],'Z',teal);
 			draw_pos(target,current_zone);
 			continue;
-		} else if (input=='O'&&has_scepter) {
+		} else if (input=='o'&&has_scepter) {
 			fprintf(debug_log,"Opening portal!\n");
 			int target=p_c+dir_offset(fgetc(stdin));
 			try_summon(&current_zone[target],'O',purple);
