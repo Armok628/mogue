@@ -8,7 +8,7 @@
 #define WIDTH 80
 #define HEIGHT 24
 #define CHECKER(x) (x%2^(x/WIDTH%2))
-#define AREA WIDTH*HEIGHT
+#define AREA (WIDTH*HEIGHT)
 // bool type definition
 typedef enum {false,true} bool;
 // Tile type definition
@@ -20,32 +20,32 @@ void clear_screen();
 void move_cursor(int x,int y);
 void set_cursor_visibility(int visible);
 void draw_tile(tile_t tile);
-void draw_pos(int pos,tile_t zone[AREA]);
-void draw_board(tile_t zone[AREA]);
+void draw_pos(int pos,tile_t *zone);
+void draw_board(tile_t *zone);
 bool char_in_string(char c,char *string);
 int dir_offset(char dir);
 void set_fg (tile_t *tile,char fg,char *fg_c);
 void set_bg (tile_t *tile,char bg,char *bg_c);
 void set_tile (tile_t *tile,char fg,char *fg_c,char bg,char *bg_c);
-tile_t *random_tile(tile_t zone[AREA]);
-tile_t *random_grass(tile_t zone[AREA]);
-tile_t *random_floor(tile_t zone[AREA]);
+tile_t *random_tile(tile_t *zone);
+tile_t *random_grass(tile_t *zone);
+tile_t *random_floor(tile_t *zone);
 int abs(int n);
-char move_tile(int pos,char dir,tile_t zone[AREA]);
-void update (tile_t zone[AREA]);
+char move_tile(int pos,char dir,tile_t *zone);
+void update (tile_t *zone);
 bool try_summon(tile_t *tile,char fg,char *fg_c);
-void randomly_place(char fg,char *fg_c,tile_t zone[AREA]);
-void spawn_player(tile_t zone[AREA],int *pc);
-char move_player(char dir,int *pc,tile_t zone[AREA]);
-void place_on_grass(char fg,char *fg_c,tile_t zone[AREA]);
-void place_on_floor(char fg,char *fg_c,tile_t zone[AREA]);
+void randomly_place(char fg,char *fg_c,tile_t *zone);
+void spawn_player(tile_t *zone,int *pc);
+char move_player(char dir,int *pc,tile_t *zone);
+void place_on_grass(char fg,char *fg_c,tile_t *zone);
+void place_on_floor(char fg,char *fg_c,tile_t *zone);
 void set_wall(tile_t *tile,int pos);
 void set_floor(tile_t *tile,int pos);
 void set_door(tile_t *tile);
-void make_building(int pos,int h,int w,tile_t zone[AREA]);
-void make_random_building(tile_t zone[AREA]);
-void cull_walls(tile_t zone[AREA]);
-void make_paths(tile_t zone[AREA]);
+void make_building(int pos,int h,int w,tile_t *zone);
+void make_random_building(tile_t *zone);
+void cull_walls(tile_t *zone);
+void make_paths(tile_t *zone);
 // Global definitions
 static char
     	*reset_color="\e[0;38;38m",
@@ -80,11 +80,8 @@ int main(int argc,char **argv)
 	tcsetattr(0,TCSANOW,&new_term);
 	set_cursor_visibility(0);
 	// Variable definitions
-	/////////////////////////////////////////////////////////////
-	/// Big to-do: Change 2d matrices to 1d arrays and malloc ///
-	/////////////////////////////////////////////////////////////
-	static tile_t field[AREA]
-		,dungeon[AREA];
+	tile_t *field=malloc(AREA*sizeof(tile_t))
+		,*dungeon=malloc(AREA*sizeof(tile_t));
 	int player_coords;
 	// Initialize zone
 	for (int i=0;i<AREA;i++) {
@@ -110,19 +107,25 @@ int main(int argc,char **argv)
 		make_random_building(field);
 		make_random_building(dungeon);
 	}
-	//cull_walls(field);
-	//cull_walls(dungeon);
+	cull_walls(field);
+	cull_walls(dungeon);
 	// Initialize test subjects
-	//for (int i=0;i<monsters;i++)
-	//	place_on_floor('&',dgray,field);
-	for (int i=0;i<animals;i++)
+	for (int i=0;i<monsters;i++) {
+		printf("Making monster %i\n",i);
+		place_on_floor('&',dgray,field);
+	}
+	for (int i=0;i<animals;i++) {
+		printf("Making animal %i\n",i);
 		place_on_grass('A',yellow,field);
-	//for (int i=0;i<soldiers;i++)
-	//	place_on_floor('$',blue,field);
+	}
+	for (int i=0;i<soldiers;i++) {
+		printf("Making soldier %i\n",i);
+		place_on_floor('$',blue,field);
+	}
 	// Place special tiles (temporary)
 	randomly_place('I',purple,field);
-	//set_bg(random_floor(field),'>',dgray);
-	//set_bg(random_floor(field),'<',dgray);
+	set_bg(random_floor(field),'>',dgray);
+	set_bg(random_floor(field),'<',dgray);
 	// Initialize player
 	spawn_player(field,&player_coords);
 	// Draw board
@@ -184,12 +187,12 @@ void draw_tile(tile_t tile)
 	printf("%s%c",tile.fg?tile.fg_c:tile.bg_c
 			,tile.fg?tile.fg:tile.bg);
 }
-void draw_pos(int pos,tile_t zone[AREA])
+void draw_pos(int pos,tile_t *zone)
 {
 	move_cursor(pos%WIDTH,pos/WIDTH);
 	draw_tile(zone[pos]);
 }
-void draw_board(tile_t zone[AREA])
+void draw_board(tile_t *zone)
 {
 	for (int i=0;i<AREA;i++)
 		draw_pos(i,zone);
@@ -229,31 +232,31 @@ void set_tile (tile_t *tile,char fg,char *fg_c,char bg,char *bg_c)
 	set_fg(tile,fg,fg_c);
 	set_bg(tile,bg,bg_c);
 }
-tile_t *random_tile(tile_t zone[AREA])
+tile_t *random_tile(tile_t *zone)
 {
 	return &zone[rand()%AREA];
 }
-tile_t *random_grass(tile_t zone[AREA])
+tile_t *random_grass(tile_t *zone)
 {
-	tile_t *tile=random_tile(zone);
-	if (!tile->fg&&char_in_string(tile->bg,grass_chars))
-		return tile;
-	else
-		return random_grass(zone);
+	tile_t *tile;
+	do 
+		tile=random_tile(zone);
+	while (tile->fg||!char_in_string(tile->bg,grass_chars));
+	return tile;
 }
-tile_t *random_floor(tile_t zone[AREA])
+tile_t *random_floor(tile_t *zone)
 {
-	tile_t *tile=random_tile(zone);
-	if (!tile->fg&&tile->bg=='#')
-		return tile;
-	else
-		return random_floor(zone);
+	tile_t *tile;
+	do
+		tile=random_tile(zone);
+	while (tile->fg||tile->bg!='#');
+	return tile;
 }
 int abs(int n)
 {
 	return n>0?n:-n;
 }
-char move_tile(int pos,char dir,tile_t zone[AREA])
+char move_tile(int pos,char dir,tile_t *zone)
 {
 	int dest=pos+dir_offset(dir);
 	if (abs((dest%WIDTH)-(pos%WIDTH))==WIDTH-1||0>dest||dest>AREA)
@@ -317,7 +320,7 @@ char move_tile(int pos,char dir,tile_t zone[AREA])
 	} else
 		return '\0';
 }
-void update (tile_t zone[AREA])
+void update (tile_t *zone)
 {
 	// Make a matrix of the foreground characters
 	char fgcopies[AREA];
@@ -337,18 +340,18 @@ bool try_summon(tile_t *tile,char fg,char *fg_c)
 	}
 	return false;
 }
-void randomly_place(char fg,char *fg_c,tile_t zone[AREA])
+void randomly_place(char fg,char *fg_c,tile_t *zone)
 {
 	if (!try_summon(random_tile(zone),fg,fg_c))
 		randomly_place(fg,fg_c,zone);
 }
-void spawn_player(tile_t zone[AREA],int *pc)
+void spawn_player(tile_t *zone,int *pc)
 {
 	*pc=rand()%AREA;
 	if (!try_summon(&zone[*pc],'@',lblue))
 		spawn_player(zone,pc);
 }
-char move_player(char dir,int *pc,tile_t zone[AREA])
+char move_player(char dir,int *pc,tile_t *zone)
 {
 	char result='\0';
 	if (zone[*pc].fg!='@')
@@ -357,11 +360,11 @@ char move_player(char dir,int *pc,tile_t zone[AREA])
 		*pc+=dir_offset(dir);
 	return result;
 }
-void place_on_grass(char fg,char *fg_c,tile_t zone[AREA])
+void place_on_grass(char fg,char *fg_c,tile_t *zone)
 {
 	set_fg(random_grass(zone),fg,fg_c);
 }
-void place_on_floor(char fg,char *fg_c,tile_t zone[AREA])
+void place_on_floor(char fg,char *fg_c,tile_t *zone)
 {
 	set_fg(random_floor(zone),fg,fg_c);
 }
@@ -378,7 +381,7 @@ void set_door(tile_t *tile)
 {
 	set_tile(tile,'+',brown,'-',brown);
 }
-void make_building(int pos,int w,int h,tile_t zone[AREA])
+void make_building(int pos,int w,int h,tile_t *zone)
 {
 	// Floors
 	for (int y=pos;y<=pos+h*WIDTH;y+=WIDTH)
@@ -409,13 +412,13 @@ void make_building(int pos,int w,int h,tile_t zone[AREA])
 			set_door(&zone[pos+w+h/2*WIDTH]);
 	}
 }
-void make_random_building(tile_t zone[AREA])
+void make_random_building(tile_t *zone)
 {
 	int w=3+rand()%(WIDTH/4),h=3+rand()%(HEIGHT/4);
 	int pos=(1+rand()%(WIDTH-w-2))+(1+rand()%(HEIGHT-h-2))*WIDTH;
 	make_building(pos,w,h,zone);
 }
-void cull_walls(tile_t zone[AREA])
+void cull_walls(tile_t *zone)
 {
 	// Beware: ugly formatting ahead
 	int walls_removed;
@@ -432,6 +435,6 @@ void cull_walls(tile_t zone[AREA])
 			}
 	} while (walls_removed>0);
 }
-void make_paths(tile_t zone[AREA])
+void make_paths(tile_t *zone)
 {
 }
