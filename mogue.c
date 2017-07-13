@@ -290,19 +290,19 @@ char move_tile(int pos,char dir,tile_t *zone)
 				return '\0';
 			break;
 		case '&': // Monster
-			if (char_in_string(to->fg,"%&O"))
+			if (char_in_string(to->fg,"%&"))
 				return '\0';
 			break;
 		case '$': // Soldier
-			if (char_in_string(to->fg,"%$@AO"))
+			if (char_in_string(to->fg,"%$@A"))
 				return '\0';
 			break;
 		case 'A': // Animal
-			if (char_in_string(to->fg,"%@$&AO"))
+			if (char_in_string(to->fg,"%@$&A"))
 				return '\0';
 			break;
 		case 'Z': // Zombie
-			if (char_in_string(to->fg,"%ZO"))
+			if (char_in_string(to->fg,"%Z@"))
 				return '\0';
 	}
 	// If the destination is not the source
@@ -340,13 +340,23 @@ char move_tile(int pos,char dir,tile_t *zone)
 void update (tile_t *zone)
 {
 	// Make a matrix of the foreground characters
-	char fgcopies[AREA];
+	char fgcopies[AREA],dir;
 	for (int i=0;i<AREA;i++)
 		fgcopies[i]=zone[i].fg;
 	// For each occupied space, if it hasn't moved yet, move it
 	for (int i=0;i<AREA;i++)
 		if (fgcopies[i]&&fgcopies[i]==zone[i].fg&&zone[i].fg!='@')
-				move_tile(i,dirs[rand()%9],zone);
+			// Act based on collision
+			switch (move_tile(i,dir=dirs[rand()%9],zone)) {
+				case 'I':
+					zone[i+dir_offset(dir)].fg_c=purple;
+					draw_pos(i+dir_offset(dir),zone);
+					break;
+				case 'O':
+					set_fg(&zone[i+dir_offset(dir)]
+							,'\0',NULL);
+					draw_pos(i+dir_offset(dir),zone);
+			}
 }
 bool try_summon(tile_t *tile,char fg,char *fg_c)
 {
