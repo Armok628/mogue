@@ -161,12 +161,12 @@ int main(int argc,char **argv)
 				break;
 			case 'O':
 				fprintf(debug_log,"Entering portal!\n");
-				fprintf(debug_log,"Freeing memory...\n");
+				char *old_color=current_zone[p_c].fg_c;
 				create_field(field,buildings,monsters,
 						animals,soldiers);
 				fprintf(debug_log,"Spawning player...\n");
 				spawn_player(field,&p_c);
-				set_fg(&field[p_c],'@',purple);
+				set_fg(&field[p_c],'@',old_color);
 				draw_board(field);
 				current_zone=field;
 				fprintf(debug_log,"Done!\n");
