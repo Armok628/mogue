@@ -142,7 +142,7 @@ int main(int argc,char **argv)
 			draw_pos(target,current_zone);
 			continue;
 		} else if (input=='R'&&has_scepter
-				&&current_zone[p_c].bg=='@') {
+				&&current_zone[p_c].fg!='@') {
 			fprintf(debug_log,"Resurrecting player!\n");
 			set_fg(&current_zone[p_c],'@',lblue);
 			has_scepter=false;
