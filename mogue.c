@@ -45,8 +45,8 @@ void set_door(tile_t *tile);
 void make_building(int pos,int h,int w,tile_t *zone);
 void make_random_building(tile_t *zone);
 void cull_walls(tile_t *zone);
-tile_t *create_field(int b,int m,int a,int s);
-tile_t *create_dungeon(int b,int m);
+void create_field(tile_t *field,int b,int m,int a,int s);
+void create_dungeon(tile_t *dungeon,int b,int m);
 // Global definitions
 static char
     	*reset_color="\e[0;38;38m",
@@ -83,7 +83,9 @@ int main(int argc,char **argv)
 	tcsetattr(0,TCSANOW,&new_term);
 	set_cursor_visibility(0);
 	// Variable definitions
-	tile_t *field,*current_zone;
+	tile_t *field=malloc(AREA*sizeof(tile_t))
+		,*dungeon=malloc(AREA*sizeof(tile_t))
+		,*current_zone;
 	int p_c;
 	// Parse command line arguments
 	int buildings=20,monsters=20,animals=20,soldiers=20; // Defaults
@@ -99,7 +101,7 @@ int main(int argc,char **argv)
 			sscanf(argv[1],"%i",&buildings);
 	}
 	// Initialize field
-	field=create_field(buildings,monsters,animals,soldiers);
+	create_field(field,buildings,monsters,animals,soldiers);
 	current_zone=field;
 	// Initialize player
 	spawn_player(current_zone,&p_c);
@@ -120,7 +122,8 @@ int main(int argc,char **argv)
 			fprintf(debug_log,"Entering dungeon!\n");
 			char *old_color=current_zone[p_c].fg_c;
 			set_fg(&current_zone[p_c],'\0',NULL);
-			current_zone=create_dungeon(buildings,monsters);
+			create_dungeon(dungeon,buildings,monsters);
+			current_zone=dungeon;
 			for (p_c=0;current_zone[p_c].bg!='<';p_c++);
 			set_fg(&current_zone[p_c],'@',old_color);
 			draw_board(current_zone);
@@ -130,17 +133,19 @@ int main(int argc,char **argv)
 			for (p_c=0;field[p_c].bg!='>';p_c++);
 			set_fg(&field[p_c],'@',old_color);
 			draw_board(field);
-			fprintf(debug_log,"Freeing memory...\n");
-			free(current_zone);
 			current_zone=field;
 		} else if (input=='z'&&has_scepter) {
 			fprintf(debug_log,"Summoning zombie!\n");
-			input=fgetc(stdin);
-			int target=p_c+dir_offset(input);
+			int target=p_c+dir_offset(fgetc(stdin));
 			update(current_zone);
 			try_summon(&current_zone[target],'Z',teal);
 			draw_pos(target,current_zone);
 			continue;
+		} else if (input=='O'&&has_scepter) {
+			fprintf(debug_log,"Opening portal!\n");
+			int target=p_c+dir_offset(fgetc(stdin));
+			try_summon(&current_zone[target],'O',purple);
+			draw_pos(target,current_zone);
 		} else if (input=='R'&&has_scepter
 				&&current_zone[p_c].fg!='@') {
 			fprintf(debug_log,"Resurrecting player!\n");
@@ -154,6 +159,18 @@ int main(int argc,char **argv)
 				current_zone[p_c].fg_c=purple;
 				draw_pos(p_c,current_zone);
 				break;
+			case 'O':
+				fprintf(debug_log,"Entering portal!\n");
+				fprintf(debug_log,"Freeing memory...\n");
+				create_field(field,buildings,monsters,
+						animals,soldiers);
+				fprintf(debug_log,"Spawning player...\n");
+				spawn_player(field,&p_c);
+				set_fg(&field[p_c],'@',purple);
+				draw_board(field);
+				current_zone=field;
+				fprintf(debug_log,"Done!\n");
+
 		}
 		update(current_zone);
 	}
@@ -266,26 +283,26 @@ char move_tile(int pos,char dir,tile_t *zone)
 		case '%': // Wall
 		case '+': // Door
 		case 'I': // Scepter
-		case '>': // Staircase (down)
+		case 'O': // Portal
 			return '\0'; // Always disallowed
 		case '@': // Player
 			if (char_in_string(to->fg,"%$"))
 				return '\0';
 			break;
 		case '&': // Monster
-			if (char_in_string(to->fg,"%&"))
+			if (char_in_string(to->fg,"%&O"))
 				return '\0';
 			break;
 		case '$': // Soldier
-			if (char_in_string(to->fg,"%$@A"))
+			if (char_in_string(to->fg,"%$@AO"))
 				return '\0';
 			break;
 		case 'A': // Animal
-			if (char_in_string(to->fg,"%@$&A"))
+			if (char_in_string(to->fg,"%@$&AO"))
 				return '\0';
 			break;
 		case 'Z': // Zombie
-			if (char_in_string(to->fg,"%Z"))
+			if (char_in_string(to->fg,"%ZO"))
 				return '\0';
 	}
 	// If the destination is not the source
@@ -435,13 +452,11 @@ void cull_walls(tile_t *zone)
 			}
 	} while (walls_removed>0);
 }
-tile_t *create_field(int b,int m,int a,int s)
+void create_field(tile_t *field,int b,int m,int a,int s)
 {
-	fprintf(debug_log,"Allocating memory (field)...\n");
-	tile_t *field=malloc(AREA*sizeof(tile_t));
 	fprintf(debug_log,"Growing grass...\n");
 	for (int i=0;i<AREA;i++)
-		set_bg(&field[i],grass_chars[rand()%5]
+		set_tile(&field[i],'\0',NULL,grass_chars[rand()%5]
 				,grass_colors[rand()%2]);
 	fprintf(debug_log,"Building buildings...\n");
 	for (int i=0;i<b;i++)
@@ -459,13 +474,12 @@ tile_t *create_field(int b,int m,int a,int s)
 		place_on_floor('$',blue,field);
 	fprintf(debug_log,"Digging stairwell...\n");
 	set_bg(random_floor(field),'>',brown);
+	fprintf(debug_log,"Opening portal...");
+	place_on_grass('O',purple,field);
 	fprintf(debug_log,"Done!\n");
-	return field;
 }
-tile_t *create_dungeon(int b,int m)
+void create_dungeon(tile_t *dungeon,int b,int m)
 {
-	fprintf(debug_log,"Allocating memory (dungeon)...\n");
-	tile_t *dungeon=malloc(AREA*sizeof(tile_t));
 	fprintf(debug_log,"Placing rocks...\n");
 	for (int i=0;i<AREA;i++)
 		set_tile(&dungeon[i],'%',rock_colors[rand()%2],'%',dgray);
@@ -482,5 +496,4 @@ tile_t *create_dungeon(int b,int m)
 	fprintf(debug_log,"Crafting scepter...\n");
 	randomly_place('I',purple,dungeon);
 	fprintf(debug_log,"Done!\n");
-	return dungeon;
 }
