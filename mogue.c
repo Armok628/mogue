@@ -275,7 +275,7 @@ int abs(int n)
 char move_tile(int pos,char dir,tile_t *zone)
 {
 	int dest=pos+dir_offset(dir);
-	if (abs((dest%WIDTH)-(pos%WIDTH))==WIDTH-1||0>dest||dest>AREA)
+	if (abs((dest%WIDTH)-(pos%WIDTH))==WIDTH-1||0>dest||dest>AREA-1)
 		return '\0';
 	tile_t *from=&zone[pos],*to=&zone[dest];
 	// Note: Describes only cases where movement is disallowed
