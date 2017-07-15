@@ -148,7 +148,7 @@ int main(int argc,char **argv)
 			continue;
 		} else if (input=='o'&&has_scepter) {
 			fprintf(debug_log,"Opening portal!\n");
-			int target=p_c+dir_offset(fgetc(stdin));
+			int target=p_c+2*dir_offset(fgetc(stdin));
 			try_summon(&current_zone[target],'O',purple);
 			draw_pos(target,current_zone);
 		} else if (input=='R'&&has_scepter
@@ -175,6 +175,7 @@ int main(int argc,char **argv)
 				draw_board(field);
 				current_zone=field;
 				fprintf(debug_log,"Done!\n");
+				continue;
 
 		}
 		update(current_zone);
