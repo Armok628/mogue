@@ -121,7 +121,7 @@ int main(int argc,char **argv)
 		//fprintf(debug_log,"Input registered: \'%c\'\n",input);
 		if (input=='q')
 			break;
-		if (input=='>'&&c_z[p_c].bg=='>') {
+		if (input=='>'&&c_z[p_c].bg=='>'&&c_z[p_c].fg=='@') {
 			fprintf(debug_log,"Entering dungeon!\n");
 			char *old_color=c_z[p_c].fg_c;
 			set_fg(&c_z[p_c],'\0',NULL);
@@ -131,7 +131,7 @@ int main(int argc,char **argv)
 			set_fg(&c_z[p_c],'@',old_color);
 			draw_board(c_z);
 			continue;
-		} else if (input=='<'&&c_z[p_c].bg=='<') {
+		} else if (input=='<'&&c_z[p_c].bg=='<'&&c_z[p_c].fg=='@') {
 			fprintf(debug_log,"Exiting dungeon!\n");
 			char *old_color=c_z[p_c].fg_c;
 			for (p_c=0;field[p_c].bg!='>';p_c++);
