@@ -130,6 +130,7 @@ int main(int argc,char **argv)
 			for (p_c=0;current_zone[p_c].bg!='<';p_c++);
 			set_fg(&current_zone[p_c],'@',old_color);
 			draw_board(current_zone);
+			continue;
 		} else if (input=='<'&&current_zone[p_c].bg=='<') {
 			fprintf(debug_log,"Exiting dungeon!\n");
 			char *old_color=current_zone[p_c].fg_c;
@@ -137,6 +138,7 @@ int main(int argc,char **argv)
 			set_fg(&field[p_c],'@',old_color);
 			draw_board(field);
 			current_zone=field;
+			continue;
 		} else if (input=='z'&&has_scepter) {
 			fprintf(debug_log,"Summoning zombie!\n");
 			int target=p_c+dir_offset(fgetc(stdin));
@@ -508,9 +510,11 @@ void create_dungeon(tile_t *dungeon,int b,int m)
 	randomly_place('I',purple,dungeon);
 	fprintf(debug_log,"Digging stairwell...\n");
 	set_bg(random_floor(dungeon),'<',brown);
-	fprintf(debug_log,"Mapping tunnels...\n");
-	for (int i=0;i<TUNNELS;i++)
-		while (!make_path(dungeon,rand()%AREA));
+	if (b>1) {
+		fprintf(debug_log,"Mapping tunnels...\n");
+		for (int i=0;i<TUNNELS;i++)
+			while (!make_path(dungeon,rand()%AREA));
+	}
 	fprintf(debug_log,"Done!\n");
 }
 int dist_to_wall(int pos,char dir,tile_t *zone)
