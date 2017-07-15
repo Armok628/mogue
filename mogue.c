@@ -504,12 +504,13 @@ void create_dungeon(tile_t *dungeon,int b,int m)
 	fprintf(debug_log,"Creating monsters...\n");
 	for (int i=0;i<m;i++)
 		place_on_floor('&',dgray,dungeon);
-	fprintf(debug_log,"Digging stairwell and tunnels...\n");
-	set_bg(random_floor(dungeon),'<',brown);
-	for (int i=0;i<TUNNELS;i++)
-		while (!make_path(dungeon,rand()%AREA));
 	fprintf(debug_log,"Crafting scepter...\n");
 	randomly_place('I',purple,dungeon);
+	fprintf(debug_log,"Digging stairwell...\n");
+	set_bg(random_floor(dungeon),'<',brown);
+	fprintf(debug_log,"Mapping tunnels...\n");
+	for (int i=0;i<TUNNELS;i++)
+		while (!make_path(dungeon,rand()%AREA));
 	fprintf(debug_log,"Done!\n");
 }
 int dist_to_wall(int pos,char dir,tile_t *zone)
