@@ -88,7 +88,7 @@ int main(int argc,char **argv)
 	// Variable definitions
 	tile_t *field=malloc(AREA*sizeof(tile_t))
 		,*dungeon=malloc(AREA*sizeof(tile_t))
-		,*current_zone;
+		,*c_z;
 	int p_c;
 	// Parse command line arguments
 	int buildings=20,monsters=20,animals=20,soldiers=20; // Defaults
@@ -105,12 +105,12 @@ int main(int argc,char **argv)
 	}
 	// Initialize field
 	create_field(field,buildings,monsters,animals,soldiers);
-	current_zone=field;
+	c_z=field;
 	// Initialize player
-	spawn_player(current_zone,&p_c);
+	spawn_player(c_z,&p_c);
 	// Draw board
 	clear_screen();
-	draw_board(current_zone);
+	draw_board(c_z);
 	// Control loop
 	char input;
 	bool has_scepter=false;
@@ -121,64 +121,75 @@ int main(int argc,char **argv)
 		//fprintf(debug_log,"Input registered: \'%c\'\n",input);
 		if (input=='q')
 			break;
-		if (input=='>'&&current_zone[p_c].bg=='>') {
+		if (input=='>'&&c_z[p_c].bg=='>') {
 			fprintf(debug_log,"Entering dungeon!\n");
-			char *old_color=current_zone[p_c].fg_c;
-			set_fg(&current_zone[p_c],'\0',NULL);
+			char *old_color=c_z[p_c].fg_c;
+			set_fg(&c_z[p_c],'\0',NULL);
 			create_dungeon(dungeon,buildings,monsters);
-			current_zone=dungeon;
-			for (p_c=0;current_zone[p_c].bg!='<';p_c++);
-			set_fg(&current_zone[p_c],'@',old_color);
-			draw_board(current_zone);
+			c_z=dungeon;
+			for (p_c=0;c_z[p_c].bg!='<';p_c++);
+			set_fg(&c_z[p_c],'@',old_color);
+			draw_board(c_z);
 			continue;
-		} else if (input=='<'&&current_zone[p_c].bg=='<') {
+		} else if (input=='<'&&c_z[p_c].bg=='<') {
 			fprintf(debug_log,"Exiting dungeon!\n");
-			char *old_color=current_zone[p_c].fg_c;
+			char *old_color=c_z[p_c].fg_c;
 			for (p_c=0;field[p_c].bg!='>';p_c++);
 			set_fg(&field[p_c],'@',old_color);
 			draw_board(field);
-			current_zone=field;
+			c_z=field;
 			continue;
 		} else if (input=='z'&&has_scepter) {
 			fprintf(debug_log,"Summoning zombie!\n");
 			int target=p_c+dir_offset(fgetc(stdin));
-			update(current_zone);
-			try_summon(&current_zone[target],'Z',teal);
-			draw_pos(target,current_zone);
+			try_summon(&c_z[target],'Z',teal);
+			draw_pos(target,c_z);
+			update(c_z);
+			continue;
+		} else if (input=='Z'&&has_scepter) {
+			update(c_z);
+			for (int i=1;i<=9;i++) {
+				try_summon(&c_z[p_c+dir_offset(i+'0')]
+						,'Z',teal);
+				draw_pos(p_c+dir_offset(i+'0'),c_z);
+			}
 			continue;
 		} else if (input=='o'&&has_scepter) {
 			fprintf(debug_log,"Opening portal!\n");
 			int target=p_c+2*dir_offset(fgetc(stdin));
-			try_summon(&current_zone[target],'O',purple);
-			draw_pos(target,current_zone);
+			try_summon(&c_z[target],'O',purple);
+			draw_pos(target,c_z);
 		} else if (input=='R'&&has_scepter
-				&&current_zone[p_c].fg!='@') {
+				&&c_z[p_c].fg!='@') {
 			fprintf(debug_log,"Resurrecting player!\n");
-			set_fg(&current_zone[p_c],'@',lblue);
+			set_fg(&c_z[p_c],'@',lblue);
 			has_scepter=false;
-			draw_pos(p_c,current_zone);
+			draw_pos(p_c,c_z);
+		} else if (input=='S') {
+			draw_board(c_z);
+			continue;
 		}
-		switch (move_player(input,&p_c,current_zone)) {
+		switch (move_player(input,&p_c,c_z)) {
 			case 'I':
 				has_scepter=true;
-				current_zone[p_c].fg_c=purple;
-				draw_pos(p_c,current_zone);
+				c_z[p_c].fg_c=purple;
+				draw_pos(p_c,c_z);
 				break;
 			case 'O':
 				fprintf(debug_log,"Entering portal!\n");
-				char *old_color=current_zone[p_c].fg_c;
+				char *old_color=c_z[p_c].fg_c;
 				create_field(field,buildings,monsters,
 						animals,soldiers);
 				fprintf(debug_log,"Spawning player...\n");
 				spawn_player(field,&p_c);
 				set_fg(&field[p_c],'@',old_color);
 				draw_board(field);
-				current_zone=field;
+				c_z=field;
 				fprintf(debug_log,"Done!\n");
 				continue;
 
 		}
-		update(current_zone);
+		update(c_z);
 	}
 	// Clean up terminal
 	tcsetattr(0,TCSANOW,&old_term);
