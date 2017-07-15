@@ -166,6 +166,7 @@ int main(int argc,char **argv)
 			has_scepter=false;
 			draw_pos(p_c,c_z);
 		} else if (input=='S') {
+			clear_screen();
 			draw_board(c_z);
 			continue;
 		}
