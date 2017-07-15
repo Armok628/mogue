@@ -7,6 +7,7 @@
 #define BETW(x,min,max) (min<x&&x<max)
 #define WIDTH 80
 #define HEIGHT 24
+#define TUNNELS 8
 #define CHECKER(x) (x%2^(x/WIDTH%2))
 #define AREA (WIDTH*HEIGHT)
 // bool type definition
@@ -47,25 +48,27 @@ void make_random_building(tile_t *zone);
 void cull_walls(tile_t *zone);
 void create_field(tile_t *field,int b,int m,int a,int s);
 void create_dungeon(tile_t *dungeon,int b,int m);
+int dist_to_wall(int pos,char dir,tile_t *zone);
+bool make_path(tile_t *zone,int pos);
 // Global definitions
 static char
     	*reset_color="\e[0;38;38m",
-	*red="\e[0;31;38m",
-    	*lblue="\e[1;34;38m",
-    	*blue="\e[0;34;38m",
-    	*brown="\e[0;33;38m",
-	*yellow="\e[1;33;38m",
-	*dgray="\e[1;30;38m",
-	*white="\e[1;37;38m",
-	*teal="\e[0;36;38m",
-	*purple="\e[0;35;38m",
-	*pink="\e[1;35;38m",
-    	*grass_colors[2]={"\e[0;32;38m","\e[1;32;38m"},
-	*floor_colors[2]={"\e[1;37;38m","\e[0;38;38m"},
-	*wall_colors[2]={"\e[0;31;38m","\e[1;31;38m"},
-	*rock_colors[2]={"\e[0;37;38m","\e[1;30;38m"},
+	*red="\e[0;31;40m",
+    	*lblue="\e[1;34;40m",
+    	*blue="\e[0;34;40m",
+    	*brown="\e[0;33;40m",
+	*yellow="\e[1;33;40m",
+	*dgray="\e[1;30;40m",
+	*white="\e[1;37;40m",
+	*teal="\e[0;36;40m",
+	*purple="\e[0;35;40m",
+	*pink="\e[1;35;40m",
+	*blood="\e[1;37;41m",
+    	*grass_colors[2]={"\e[0;32;40m","\e[1;32;40m"},
+	*floor_colors[2]={"\e[1;37;40m","\e[0;38;40m"},
+	*wall_colors[2]={"\e[0;31;40m","\e[1;31;40m"},
+	*rock_colors[2]={"\e[0;37;40m","\e[1;30;40m"},
 	*grass_chars="\"\',.`",
-	*dirs="hjklyubn.",
 	*creatures="@&A$Z";
 static FILE *debug_log;
 // Main function
@@ -115,7 +118,7 @@ int main(int argc,char **argv)
 		input=fgetc(stdin);
 		if (input==27&&fgetc(stdin)==91)
 			input=fgetc(stdin);
-		fprintf(debug_log,"Input registered: \'%c\'\n",input);
+		//fprintf(debug_log,"Input registered: \'%c\'\n",input);
 		if (input=='q')
 			break;
 		if (input=='>'&&current_zone[p_c].bg=='>') {
@@ -275,7 +278,7 @@ int abs(int n)
 char move_tile(int pos,char dir,tile_t *zone)
 {
 	int dest=pos+dir_offset(dir);
-	if (abs((dest%WIDTH)-(pos%WIDTH))==WIDTH-1||0>dest||dest>AREA-1)
+	if (abs(dest%WIDTH-pos%WIDTH)==WIDTH-1||0>dest||dest>AREA-1)
 		return '\0';
 	tile_t *from=&zone[pos],*to=&zone[dest];
 	// Note: Describes only cases where movement is disallowed
@@ -324,7 +327,7 @@ char move_tile(int pos,char dir,tile_t *zone)
 			// If it's a creature not on stairs, place a corpse
 			if (char_in_string(to->fg,creatures)
 					&&!char_in_string(to->bg,"<>"))
-				set_bg(to,to->fg,red);
+				set_bg(to,to->fg,blood);
 		}
 		// Move the symbol and color
 		set_fg(to,from->fg,from->fg_c);
@@ -347,7 +350,7 @@ void update (tile_t *zone)
 	for (int i=0;i<AREA;i++)
 		if (fgcopies[i]&&fgcopies[i]==zone[i].fg&&zone[i].fg!='@')
 			// Act based on collision
-			switch (move_tile(i,dir=dirs[rand()%9],zone)) {
+			switch (move_tile(i,dir=rand()%9+'1',zone)) {
 				case 'I':
 					zone[i+dir_offset(dir)].fg_c=purple;
 					draw_pos(i+dir_offset(dir),zone);
@@ -492,7 +495,7 @@ void create_dungeon(tile_t *dungeon,int b,int m)
 {
 	fprintf(debug_log,"Placing rocks...\n");
 	for (int i=0;i<AREA;i++)
-		set_tile(&dungeon[i],'%',rock_colors[rand()%2],'%',dgray);
+		set_tile(&dungeon[i],'%',rock_colors[rand()%2],'\0',NULL);
 	fprintf(debug_log,"Carving rooms...\n");
 	for (int i=0;i<b;i++)
 		make_random_building(dungeon);
@@ -501,9 +504,70 @@ void create_dungeon(tile_t *dungeon,int b,int m)
 	fprintf(debug_log,"Creating monsters...\n");
 	for (int i=0;i<m;i++)
 		place_on_floor('&',dgray,dungeon);
-	fprintf(debug_log,"Digging stairwell...\n");
+	fprintf(debug_log,"Digging stairwell and tunnels...\n");
 	set_bg(random_floor(dungeon),'<',brown);
+	for (int i=0;i<TUNNELS;i++)
+		while (!make_path(dungeon,rand()%AREA));
 	fprintf(debug_log,"Crafting scepter...\n");
 	randomly_place('I',purple,dungeon);
 	fprintf(debug_log,"Done!\n");
+}
+int dist_to_wall(int pos,char dir,tile_t *zone)
+{
+	int dist=0,dest=pos;
+	if (dir_offset(dir)==0)
+		return -1;
+	for (;zone[pos].bg!='%';pos=dest) {
+		dest=pos+dir_offset(dir);
+		dist++;
+		if (abs(pos%WIDTH-dest%WIDTH)==WIDTH-1
+				||dest<0||dest>AREA)
+			return -1;
+	}
+	return dist;
+}
+bool make_path(tile_t *zone,int pos)
+{
+	fprintf(debug_log,"Trying to make a path at %i.\n",pos);
+	if (!char_in_string(zone[pos].bg,grass_chars)&&zone[pos].bg) {
+		fprintf(debug_log,"Invalid path origin.\n");
+		return false;
+	}
+	fprintf(debug_log,"Start position looks okay...\n");
+	fprintf(debug_log,"Trying to determining path direction...\n");
+	int dist[2]={AREA,AREA};
+	char dirs[2]={'\0','\0'};
+	for (int i=1;i<=4;i++) {
+		int d=dist_to_wall(pos,2*i+'0',zone);
+		if (d>0&&d<dist[1]) {
+			if (d<dist[0]) {
+				dist[1]=dist[0];
+				dist[0]=d;
+				dirs[1]=dirs[0];
+				dirs[0]=2*i+'0';
+			}
+			else {
+				dist[1]=d;
+				dirs[1]=2*i+'0';
+			}
+		}
+	}
+	if (dist[2]==AREA||!dirs[1]) {
+		fprintf(debug_log,"No valid path direction. Stopping.\n");
+		return false;
+	}
+	fprintf(debug_log,"Shortest directions: %c and %c",dirs[0],dirs[1]);
+	fprintf(debug_log,"Placing path tiles...\n");
+	for (int i=0;i<2;i++) {
+		int d=pos+dist[i]*dir_offset(dirs[i]);
+		for (int j=0;j<dist[i];j++) {
+			int p=pos+j*dir_offset(dirs[i]);
+			set_floor(&zone[p],p);
+			draw_pos(p,zone);
+		}
+		set_door(&zone[d]);
+		draw_pos(d,zone);
+	}
+	fprintf(debug_log,"Finished making a path.\n");
+	return true;
 }
