@@ -155,10 +155,15 @@ int main(int argc,char **argv)
 			}
 			continue;
 		} else if (input=='o'&&has_scepter) {
+			input=fgetc(stdin);
 			fprintf(debug_log,"Opening portal!\n");
-			int target=p_c+2*dir_offset(fgetc(stdin));
-			try_summon(&c_z[target],'O',purple);
-			draw_pos(target,c_z);
+			int target=p_c+2*dir_offset(input);
+			if (!c_z[p_c+dir_offset(input)].fg) {
+				try_summon(&c_z[target],'O',purple);
+				draw_pos(target,c_z);
+			}
+			update(c_z);
+			continue;
 		} else if (input=='R'&&has_scepter
 				&&c_z[p_c].fg!='@') {
 			fprintf(debug_log,"Resurrecting player!\n");
