@@ -178,7 +178,7 @@ int main(int argc,char **argv)
 			set_fg(&c_z[p_c],'@',lblue);
 			has_scepter=false;
 			draw_pos(p_c,c_z);
-		} else if (input=='S') {
+		} else if (input=='R') {
 			clear_screen();
 			draw_board(c_z);
 			continue;
