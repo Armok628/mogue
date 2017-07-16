@@ -7,7 +7,7 @@
 #define BETW(x,min,max) (min<x&&x<max)
 #define WIDTH 80
 #define HEIGHT 24
-#define TUNNELS 8
+#define TUNNELS (WIDTH/10)
 #define CHECKER(x) (x%2^(x/WIDTH%2))
 #define AREA (WIDTH*HEIGHT)
 // bool type definition
@@ -240,7 +240,7 @@ h/j/k/l/y/u/b/n, arrow keys, or numpad 1-9 for movement.\n\
 \n\
 Use Shift-R to redraw the game if you resize the window.\n\
 \n\
-When you have the scepter:\n\
+When you have the scepter from the dungeon:\n\
 	z+(direction) summons a zombie\n\
 	o+(direction) opens a portal\n\
 	Shift-Z summons zombies all around you\n\
