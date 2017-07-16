@@ -18,7 +18,6 @@ typedef struct tile_t {
 } tile_t;
 // Function prototypes
 void clear_screen();
-void clear_line();
 void move_cursor(int x,int y);
 void print_help();
 void set_cursor_visibility(int visible);
@@ -217,10 +216,6 @@ int main(int argc,char **argv)
 void clear_screen()
 {
 	printf("\e[2J");
-}
-void clear_line()
-{
-	printf("\e[%dD\e[K",WIDTH);
 }
 void move_cursor(int x,int y)
 {
