@@ -18,7 +18,9 @@ typedef struct tile_t {
 } tile_t;
 // Function prototypes
 void clear_screen();
+void clear_line();
 void move_cursor(int x,int y);
+void print_help();
 void set_cursor_visibility(int visible);
 void draw_tile(tile_t tile);
 void draw_pos(int pos,tile_t *zone);
@@ -110,6 +112,12 @@ int main(int argc,char **argv)
 	spawn_player(c_z,&p_c);
 	// Draw board
 	clear_screen();
+	draw_board(c_z);
+	// Print help prompt
+	move_cursor(0,HEIGHT-1);
+	printf("%sPress ? now for help.",reset_color);
+	if (fgetc(stdin)=='?')
+		print_help();
 	draw_board(c_z);
 	// Control loop
 	char input;
@@ -210,9 +218,37 @@ void clear_screen()
 {
 	printf("\e[2J");
 }
+void clear_line()
+{
+	printf("\e[%dD\e[K",WIDTH);
+}
 void move_cursor(int x,int y)
 {
 	printf("\e[%d;%dH",y+1,x+1);
+}
+void print_help()
+{
+	clear_screen();
+	move_cursor(0,0);
+	printf("%s",reset_color);
+	printf("\
+Mogue is a very simple turn-based roguelike.\n\
+Creatures kill one another by moving on top of each other.\n\
+\n\
+h/j/k/l/y/u/b/n, arrow keys, or numpad 1-9 for movement.\n\
+> and < enter and exit dungeons respectively when on stairs.\n\
+\n\
+Use Shift-R to redraw the game if you resize the window.\n\
+\n\
+When you have the scepter:\n\
+	z+(direction) summons a zombie\n\
+	o+(direction) opens a portal\n\
+	Shift-Z summons zombies all around you\n\
+\n\
+Press any key to continue.");
+	fgetc(stdin);
+	clear_screen();
+	return;
 }
 void set_cursor_visibility(int visible)
 {
@@ -579,17 +615,14 @@ bool make_path(tile_t *zone,int pos)
 		fprintf(debug_log,"No valid path direction. Stopping.\n");
 		return false;
 	}
-	fprintf(debug_log,"Shortest directions: %c and %c",dirs[0],dirs[1]);
 	fprintf(debug_log,"Placing path tiles...\n");
 	for (int i=0;i<2;i++) {
 		int d=pos+dist[i]*dir_offset(dirs[i]);
 		for (int j=0;j<dist[i];j++) {
 			int p=pos+j*dir_offset(dirs[i]);
 			set_floor(&zone[p],p);
-			draw_pos(p,zone);
 		}
 		set_door(&zone[d]);
-		draw_pos(d,zone);
 	}
 	fprintf(debug_log,"Finished making a path.\n");
 	return true;
