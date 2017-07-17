@@ -177,7 +177,7 @@ int main(int argc,char **argv)
 			set_fg(&c_z[p_c],'@',lblue);
 			has_scepter=false;
 			draw_pos(p_c,c_z);
-		} else if (input=='R') {
+		} else if (input=='S') {
 			clear_screen();
 			draw_board(c_z);
 			continue;
@@ -233,12 +233,13 @@ Creatures kill one another by moving on top of each other.\n\
 h/j/k/l/y/u/b/n, arrow keys, or numpad 1-9 for movement.\n\
 > and < enter and exit dungeons respectively when on stairs.\n\
 \n\
-Use Shift-R to redraw the game if you resize the window.\n\
+Use Shift-S to redraw the game if you resize the window.\n\
 \n\
 When you have the scepter from the dungeon:\n\
 	z+(direction) summons a zombie\n\
 	o+(direction) opens a portal\n\
 	Shift-Z summons zombies all around you\n\
+	Shift-R resurrects you, destroying your scepter\n\
 \n\
 Press any key to continue.");
 	fgetc(stdin);
