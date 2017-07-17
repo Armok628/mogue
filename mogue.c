@@ -335,11 +335,6 @@ char move_tile(int pos,char dir,tile_t *zone)
 	tile_t *from=&zone[pos],*to=&zone[dest];
 	// Note: Describes only cases where movement is disallowed
 	switch (from->fg) {
-		case '%': // Wall
-		case '+': // Door
-		case 'I': // Scepter
-		case 'O': // Portal
-			return '\0'; // Always disallowed
 		case '@': // Player
 			if (char_in_string(to->fg,"%$"))
 				return '\0';
@@ -359,6 +354,9 @@ char move_tile(int pos,char dir,tile_t *zone)
 		case 'Z': // Zombie
 			if (char_in_string(to->fg,"%Z@+"))
 				return '\0';
+			break;
+		default:
+			return '\0';
 	}
 	// If the destination is not the source
 	if (dest!=pos) {
