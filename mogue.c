@@ -22,7 +22,7 @@ void move_cursor(int x,int y);
 void print_help();
 void set_cursor_visibility(int visible);
 void draw_tile(tile_t tile);
-void draw_pos(int pos,tile_t *zone);
+void draw_pos(tile_t *zone,int pos);
 void draw_board(tile_t *zone);
 bool char_in_string(char c,char *string);
 int dir_offset(char dir);
@@ -33,20 +33,20 @@ tile_t *random_tile(tile_t *zone);
 tile_t *random_grass(tile_t *zone);
 tile_t *random_floor(tile_t *zone);
 int abs(int n);
-char move_tile(int pos,char dir,tile_t *zone);
+char move_tile(tile_t *zone,int pos,char dir);
 void update (tile_t *zone);
 bool try_summon(tile_t *tile,char fg,char *fg_c);
 void spawn_player(tile_t *zone,int *pc);
-char move_player(char dir,int *pc,tile_t *zone);
+char move_player(tile_t *zone,char dir,int *pc);
 void set_wall(tile_t *tile,int pos);
 void set_floor(tile_t *tile,int pos);
 void set_door(tile_t *tile);
-void make_building(int pos,int h,int w,tile_t *zone);
+void make_building(tile_t *zone,int pos,int h,int w);
 void make_random_building(tile_t *zone);
 void cull_walls(tile_t *zone);
 void create_field(tile_t *field,int b,int m,int a,int s);
 void create_dungeon(tile_t *dungeon,int b,int m);
-int dist_to_wall(int pos,char dir,tile_t *zone);
+int dist_to_wall(tile_t *zone,int pos,char dir);
 bool make_path(tile_t *zone,int pos);
 // Global definitions
 static char
@@ -147,7 +147,7 @@ int main(int argc,char **argv)
 			fprintf(debug_log,"Summoning zombie!\n");
 			int target=p_c+dir_offset(fgetc(stdin));
 			try_summon(&c_z[target],'Z',teal);
-			draw_pos(target,c_z);
+			draw_pos(c_z,target);
 			update(c_z);
 			continue;
 		} else if (input=='Z'&&has_scepter) {
@@ -155,7 +155,7 @@ int main(int argc,char **argv)
 			for (int i=1;i<=9;i++) {
 				try_summon(&c_z[p_c+dir_offset(i+'0')]
 						,'Z',teal);
-				draw_pos(p_c+dir_offset(i+'0'),c_z);
+				draw_pos(c_z,p_c+dir_offset(i+'0'));
 			}
 			continue;
 		} else if (input=='o'&&has_scepter) {
@@ -164,7 +164,7 @@ int main(int argc,char **argv)
 			int target=p_c+2*dir_offset(input);
 			if (!c_z[p_c+dir_offset(input)].fg) {
 				try_summon(&c_z[target],'O',purple);
-				draw_pos(target,c_z);
+				draw_pos(c_z,target);
 			}
 			update(c_z);
 			continue;
@@ -173,17 +173,17 @@ int main(int argc,char **argv)
 			fprintf(debug_log,"Resurrecting player!\n");
 			set_fg(&c_z[p_c],'@',lblue);
 			has_scepter=false;
-			draw_pos(p_c,c_z);
+			draw_pos(c_z,p_c);
 		} else if (input=='S') {
 			clear_screen();
 			draw_board(c_z);
 			continue;
 		}
-		switch (move_player(input,&p_c,c_z)) {
+		switch (move_player(c_z,input,&p_c)) {
 			case 'I':
 				has_scepter=true;
 				c_z[p_c].fg_c=purple;
-				draw_pos(p_c,c_z);
+				draw_pos(c_z,p_c);
 				break;
 			case 'O':
 				fprintf(debug_log,"Entering portal!\n");
@@ -255,7 +255,7 @@ void draw_tile(tile_t tile)
 	printf("%s%c",tile.fg?tile.fg_c:tile.bg_c
 			,tile.fg?tile.fg:tile.bg);
 }
-void draw_pos(int pos,tile_t *zone)
+void draw_pos(tile_t *zone,int pos)
 {
 	move_cursor(pos%WIDTH,pos/WIDTH);
 	draw_tile(zone[pos]);
@@ -263,7 +263,7 @@ void draw_pos(int pos,tile_t *zone)
 void draw_board(tile_t *zone)
 {
 	for (int i=0;i<AREA;i++)
-		draw_pos(i,zone);
+		draw_pos(zone,i);
 }
 bool char_in_string(char c,char *string)
 {
@@ -329,7 +329,7 @@ int abs(int n)
 {
 	return n<0?-n:n;
 }
-char move_tile(int pos,char dir,tile_t *zone)
+char move_tile(tile_t *zone,int pos,char dir)
 {
 	int dest=pos+dir_offset(dir);
 	if (abs(dest%WIDTH-pos%WIDTH)==WIDTH-1||0>dest||dest>AREA-1)
@@ -367,7 +367,7 @@ char move_tile(int pos,char dir,tile_t *zone)
 		if (to->fg=='+') {
 			// Open it, not moving the creature
 			set_fg(to,'\0',NULL);
-			draw_pos(dest,zone);
+			draw_pos(zone,dest);
 			// Report failure to move
 			return '\0';
 		}
@@ -385,8 +385,8 @@ char move_tile(int pos,char dir,tile_t *zone)
 		set_fg(to,from->fg,from->fg_c);
 		set_fg(from,'\0',NULL);
 		// Redraw the changed positions
-		draw_pos(pos,zone);
-		draw_pos(dest,zone);
+		draw_pos(zone,pos);
+		draw_pos(zone,dest);
 		// Return the value of what was captured
 		return killed;
 	} else
@@ -402,15 +402,15 @@ void update (tile_t *zone)
 	for (int i=0;i<AREA;i++)
 		if (fgcopies[i]&&fgcopies[i]==zone[i].fg&&zone[i].fg!='@')
 			// Act based on collision
-			switch (move_tile(i,dir=rand()%9+'1',zone)) {
+			switch (move_tile(zone,i,dir=rand()%9+'1')) {
 				case 'I':
 					zone[i+dir_offset(dir)].fg_c=purple;
-					draw_pos(i+dir_offset(dir),zone);
+					draw_pos(zone,i+dir_offset(dir));
 					break;
 				case 'O':
 					set_fg(&zone[i+dir_offset(dir)]
 							,'\0',NULL);
-					draw_pos(i+dir_offset(dir),zone);
+					draw_pos(zone,i+dir_offset(dir));
 			}
 }
 bool try_summon(tile_t *tile,char fg,char *fg_c)
@@ -428,12 +428,12 @@ void spawn_player(tile_t *zone,int *pc)
 	if (!try_summon(&zone[*pc],'@',lblue))
 		spawn_player(zone,pc);
 }
-char move_player(char dir,int *pc,tile_t *zone)
+char move_player(tile_t *zone,char dir,int *pc)
 {
 	char result='\0';
 	if (zone[*pc].fg!='@')
 		return '\0';
-	if (result=move_tile(*pc,dir,zone))
+	if (result=move_tile(zone,*pc,dir))
 		*pc+=dir_offset(dir);
 	return result;
 }
@@ -450,7 +450,7 @@ void set_door(tile_t *tile)
 {
 	set_tile(tile,'+',brown,'-',brown);
 }
-void make_building(int pos,int w,int h,tile_t *zone)
+void make_building(tile_t *zone,int pos,int w,int h)
 {
 	// Floors
 	for (int y=pos;y<=pos+h*WIDTH;y+=WIDTH)
@@ -485,7 +485,7 @@ void make_random_building(tile_t *zone)
 {
 	int w=3+rand()%(WIDTH/4),h=3+rand()%(HEIGHT/4);
 	int pos=(1+rand()%(WIDTH-w-2))+(1+rand()%(HEIGHT-h-2))*WIDTH;
-	make_building(pos,w,h,zone);
+	make_building(zone,pos,w,h);
 }
 void cull_walls(tile_t *zone)
 {
@@ -554,7 +554,7 @@ void create_dungeon(tile_t *dungeon,int b,int m)
 	}
 	fprintf(debug_log,"Done!\n");
 }
-int dist_to_wall(int pos,char dir,tile_t *zone)
+int dist_to_wall(tile_t *zone,int pos,char dir)
 {
 	int dist=0,dest=pos;
 	if (dir_offset(dir)==0)
@@ -580,7 +580,7 @@ bool make_path(tile_t *zone,int pos)
 	int dist[2]={AREA,AREA};
 	char dirs[2]={'\0','\0'};
 	for (int i=1;i<=4;i++) {
-		int d=dist_to_wall(pos,2*i+'0',zone);
+		int d=dist_to_wall(zone,pos,2*i+'0');
 		if (d>0&&d<dist[1]) {
 			if (d<dist[0]) {
 				dist[1]=dist[0];
