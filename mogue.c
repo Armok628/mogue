@@ -433,7 +433,8 @@ char move_player(tile_t *zone,char dir,int *pc)
 	char result='\0';
 	if (zone[*pc].fg!='@')
 		return '\0';
-	if (result=move_tile(zone,*pc,dir))
+	result=move_tile(zone,*pc,dir);
+	if (result)
 		*pc+=dir_offset(dir);
 	return result;
 }
@@ -594,7 +595,7 @@ bool make_path(tile_t *zone,int pos)
 			}
 		}
 	}
-	if (dist[2]==AREA||!dirs[1]) {
+	if (dist[1]==AREA||!dirs[1]) {
 		fprintf(debug_log,"No valid path direction. Stopping.\n");
 		return false;
 	}
