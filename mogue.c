@@ -2,14 +2,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <termios.h>
+#include "display.h"
 #define NEW(x) malloc(sizeof(x))
 #define BETW(x,min,max) (min<x&&x<max)
 #define WIDTH 80
 #define HEIGHT 24
-#define TUNNELS (WIDTH/10)
-#define CHECKER(x) (x%2^(x/WIDTH%2))
 #define AREA (WIDTH*HEIGHT)
+#define TUNNELS (AREA/240)
+#define CHECKER(x) (x%2^(x/WIDTH%2))
 // bool type definition
 typedef enum {false,true} bool;
 // Tile type definition
@@ -17,10 +17,7 @@ typedef struct tile_t {
 	char fg,bg,*fg_c,*bg_c;
 } tile_t;
 // Function prototypes
-void clear_screen();
-void move_cursor(int x,int y);
 void print_help();
-void set_cursor_visibility(int visible);
 void draw_tile(tile_t tile);
 void draw_pos(tile_t *zone,int pos);
 void draw_board(tile_t *zone);
@@ -77,11 +74,7 @@ int main(int argc,char **argv)
 	// Seed the RNG
 	srand(time(NULL));
 	// Set terminal attributes
-	struct termios old_term,new_term;
-	tcgetattr(0,&old_term);
-	new_term=old_term;
-	new_term.c_lflag&=(~ICANON&~ECHO);
-	tcsetattr(0,TCSANOW,&new_term);
+	set_terminal_canon(false);
 	set_cursor_visibility(0);
 	// Variable definitions
 	tile_t *field=malloc(AREA*sizeof(tile_t))
@@ -202,7 +195,7 @@ int main(int argc,char **argv)
 		update(c_z);
 	}
 	// Clean up terminal
-	tcsetattr(0,TCSANOW,&old_term);
+	set_terminal_canon(true);
 	printf("%s",reset_color);
 	set_cursor_visibility(1);
 	move_cursor(0,HEIGHT);
@@ -210,14 +203,6 @@ int main(int argc,char **argv)
 	return 0;
 }
 // Function definitions
-void clear_screen()
-{
-	printf("\e[2J");
-}
-void move_cursor(int x,int y)
-{
-	printf("\e[%d;%dH",y+1,x+1);
-}
 void print_help()
 {
 	clear_screen();
@@ -242,13 +227,6 @@ Press any key to continue.");
 	fgetc(stdin);
 	clear_screen();
 	return;
-}
-void set_cursor_visibility(int visible)
-{
-	if (visible)
-		printf("\e[?25h");
-	else
-		printf("\e[?25l");
 }
 void draw_tile(tile_t tile)
 {
