@@ -47,22 +47,11 @@ int dist_to_wall(tile_t *zone,int pos,char dir);
 bool make_path(tile_t *zone,int pos);
 // Global definitions
 static char
-    	*reset_color="\e[0;38;38m",
-	*red="\e[0;31;40m",
-    	*lblue="\e[1;34;40m",
-    	*blue="\e[0;34;40m",
-    	*brown="\e[0;33;40m",
-	*yellow="\e[1;33;40m",
-	*dgray="\e[1;30;40m",
-	*white="\e[1;37;40m",
-	*teal="\e[0;36;40m",
-	*purple="\e[0;35;40m",
-	*pink="\e[1;35;40m",
 	*blood="\e[1;37;41m",
-    	*grass_colors[2]={"\e[0;32;40m","\e[1;32;40m"},
-	*floor_colors[2]={"\e[1;37;40m","\e[0;38;40m"},
-	*wall_colors[2]={"\e[0;31;40m","\e[1;31;40m"},
-	*rock_colors[2]={"\e[0;37;40m","\e[1;30;40m"},
+    	*grass_colors[2]={TERM_COLORS_40M[GREEN],TERM_COLORS_40M[LGREEN]},
+	*floor_colors[2]={TERM_COLORS_40M[WHITE],TERM_COLORS_40M[LGRAY]},
+	*wall_colors[2]={TERM_COLORS_40M[RED],TERM_COLORS_40M[LRED]},
+	*rock_colors[2]={TERM_COLORS_40M[GRAY],TERM_COLORS_40M[LGRAY]},
 	*grass_chars="\"\',.`",
 	*creatures="@&A$Z";
 static FILE *debug_log;
@@ -104,7 +93,7 @@ int main(int argc,char **argv)
 	draw_board(c_z);
 	// Print help prompt
 	move_cursor(0,HEIGHT-1);
-	printf("%sPress ? now for help.",reset_color);
+	printf("%sPress ? now for help.",RESET_COLOR);
 	if (fgetc(stdin)=='?')
 		print_help();
 	draw_board(c_z);
@@ -139,7 +128,7 @@ int main(int argc,char **argv)
 		} else if (input=='z'&&has_scepter) {
 			fprintf(debug_log,"Summoning zombie!\n");
 			int target=p_c+dir_offset(fgetc(stdin));
-			try_summon(&c_z[target],'Z',teal);
+			try_summon(&c_z[target],'Z',TERM_COLORS_40M[TEAL]);
 			draw_pos(c_z,target);
 			update(c_z);
 			continue;
@@ -147,7 +136,7 @@ int main(int argc,char **argv)
 			update(c_z);
 			for (int i=1;i<=9;i++) {
 				try_summon(&c_z[p_c+dir_offset(i+'0')]
-						,'Z',teal);
+						,'Z',TERM_COLORS_40M[TEAL]);
 				draw_pos(c_z,p_c+dir_offset(i+'0'));
 			}
 			continue;
@@ -156,7 +145,7 @@ int main(int argc,char **argv)
 			fprintf(debug_log,"Opening portal!\n");
 			int target=p_c+2*dir_offset(input);
 			if (!c_z[p_c+dir_offset(input)].fg) {
-				try_summon(&c_z[target],'O',purple);
+				try_summon(&c_z[target],'O',TERM_COLORS_40M[PURPLE]);
 				draw_pos(c_z,target);
 			}
 			update(c_z);
@@ -164,7 +153,7 @@ int main(int argc,char **argv)
 		} else if (input=='R'&&has_scepter
 				&&c_z[p_c].fg!='@') {
 			fprintf(debug_log,"Resurrecting player!\n");
-			set_fg(&c_z[p_c],'@',lblue);
+			set_fg(&c_z[p_c],'@',TERM_COLORS_40M[LBLUE]);
 			has_scepter=false;
 			draw_pos(c_z,p_c);
 		} else if (input=='S') {
@@ -175,7 +164,7 @@ int main(int argc,char **argv)
 		switch (move_player(c_z,input,&p_c)) {
 			case 'I':
 				has_scepter=true;
-				c_z[p_c].fg_c=purple;
+				c_z[p_c].fg_c=TERM_COLORS_40M[PURPLE];
 				draw_pos(c_z,p_c);
 				break;
 			case 'O':
@@ -196,7 +185,7 @@ int main(int argc,char **argv)
 	}
 	// Clean up terminal
 	set_terminal_canon(true);
-	printf("%s",reset_color);
+	printf("%s",RESET_COLOR);
 	set_cursor_visibility(1);
 	move_cursor(0,HEIGHT);
 	// Exit (success)
@@ -207,7 +196,7 @@ void print_help()
 {
 	clear_screen();
 	move_cursor(0,0);
-	printf("%s",reset_color);
+	printf("%s",RESET_COLOR);
 	printf("\
 Mogue is a very simple turn-based roguelike.\n\
 Creatures kill one another by moving on top of each other.\n\
@@ -382,7 +371,7 @@ void update (tile_t *zone)
 			// Act based on collision
 			switch (move_tile(zone,i,dir=rand()%9+'1')) {
 				case 'I':
-					zone[i+dir_offset(dir)].fg_c=purple;
+					zone[i+dir_offset(dir)].fg_c=TERM_COLORS_40M[PURPLE];
 					draw_pos(zone,i+dir_offset(dir));
 					break;
 				case 'O':
@@ -403,7 +392,7 @@ bool try_summon(tile_t *tile,char fg,char *fg_c)
 void spawn_player(tile_t *zone,int *pc)
 {
 	*pc=rand()%AREA;
-	if (!try_summon(&zone[*pc],'@',lblue))
+	if (!try_summon(&zone[*pc],'@',TERM_COLORS_40M[LBLUE]))
 		spawn_player(zone,pc);
 }
 char move_player(tile_t *zone,char dir,int *pc)
@@ -427,7 +416,7 @@ void set_floor(tile_t *tile,int pos)
 }
 void set_door(tile_t *tile)
 {
-	set_tile(tile,'+',brown,'-',brown);
+	set_tile(tile,'+',TERM_COLORS_40M[BROWN],'-',TERM_COLORS_40M[BROWN]);
 }
 void make_building(tile_t *zone,int pos,int w,int h)
 {
@@ -496,17 +485,17 @@ void create_field(tile_t *field,int b,int m,int a,int s)
 	cull_walls(field);
 	fprintf(debug_log,"Creating monsters...\n");
 	for (int i=0;i<m;i++)
-		set_fg(random_floor(field),'&',dgray);
+		set_fg(random_floor(field),'&',TERM_COLORS_40M[GRAY]);
 	fprintf(debug_log,"Breeding animals...\n");
 	for (int i=0;i<a;i++)
-		set_fg(random_grass(field),'A',yellow);
+		set_fg(random_grass(field),'A',TERM_COLORS_40M[YELLOW]);
 	fprintf(debug_log,"Training soldiers...\n");
 	for (int i=0;i<s;i++)
-		set_fg(random_floor(field),'$',blue);
+		set_fg(random_floor(field),'$',TERM_COLORS_40M[BLUE]);
 	fprintf(debug_log,"Digging stairwell...\n");
-	set_bg(random_floor(field),'>',brown);
+	set_bg(random_floor(field),'>',TERM_COLORS_40M[BROWN]);
 	fprintf(debug_log,"Opening portal...");
-	set_fg(random_grass(field),'O',purple);
+	set_fg(random_grass(field),'O',TERM_COLORS_40M[PURPLE]);
 	fprintf(debug_log,"Done!\n");
 }
 void create_dungeon(tile_t *dungeon,int b,int m)
@@ -521,11 +510,11 @@ void create_dungeon(tile_t *dungeon,int b,int m)
 	cull_walls(dungeon);
 	fprintf(debug_log,"Creating monsters...\n");
 	for (int i=0;i<m;i++)
-		set_fg(random_floor(dungeon),'&',dgray);
+		set_fg(random_floor(dungeon),'&',TERM_COLORS_40M[GRAY]);
 	fprintf(debug_log,"Crafting scepter...\n");
-	set_fg(random_empty_tile(dungeon),'I',purple);
+	set_fg(random_empty_tile(dungeon),'I',TERM_COLORS_40M[PURPLE]);
 	fprintf(debug_log,"Digging stairwell...\n");
-	set_bg(random_floor(dungeon),'<',brown);
+	set_bg(random_floor(dungeon),'<',TERM_COLORS_40M[BROWN]);
 	if (b>1) {
 		fprintf(debug_log,"Mapping tunnels...\n");
 		for (int i=0;i<TUNNELS;i++)
